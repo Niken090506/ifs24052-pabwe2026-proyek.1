@@ -1,8 +1,8 @@
 <template>
   <form @submit.prevent="onSubmitHandler" class="space-y-4">
     <div>
-      <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5" for="login-email-input">
-        Alamat Email
+      <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5" for="username">
+        Username / Email
       </label>
       <div class="relative">
         <Mail
@@ -11,11 +11,13 @@
         />
         <input
           type="text"
-          id="login-email-input"
+          id="username"
+          name="username"
           data-testid="login-email-input"
           v-model="email"
-          placeholder="nama@email.com atau admin"
-          aria-label="Alamat Email atau Username"
+          placeholder="admin atau nama@email.com"
+          aria-label="Username atau Email"
+          autocomplete="username"
           class="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-black/40 border border-white/10 text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:border-amber-400/50 transition-all"
           required
         />
@@ -23,7 +25,7 @@
     </div>
 
     <div>
-      <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5" for="login-password-input">
+      <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5" for="password">
         Kata Sandi
       </label>
       <div class="relative">
@@ -33,11 +35,13 @@
         />
         <input
           type="password"
-          id="login-password-input"
+          id="password"
+          name="password"
           data-testid="login-password-input"
           v-model="password"
           placeholder="••••••••"
           aria-label="Kata Sandi"
+          autocomplete="current-password"
           class="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-black/40 border border-white/10 text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:border-amber-400/50 transition-all"
           required
         />
@@ -47,7 +51,8 @@
     <div class="pt-2">
       <button
         type="submit"
-        id="login-submit-button"
+        id="btn-submit"
+        name="btn-submit"
         data-testid="login-submit-button"
         :disabled="loading"
         class="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-amber-600 hover:bg-amber-500 active:bg-amber-700 rounded-xl shadow-lg shadow-amber-600/30 transition-all disabled:opacity-60"
