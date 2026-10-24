@@ -1,8 +1,15 @@
 import apiHelper from "../../../helpers/apiHelper";
 
+/**
+ * Service API untuk modul buku catatan (Notebook, Folder, Catatan, dan Unggah Gambar).
+ */
 const notebookApi = (() => {
   const BASE_URL = DELCOM_BASEURL;
 
+  /**
+   * Mengambil semua folder catatan milik pengguna.
+   * @returns {Promise<Array<object>>}
+   */
   async function getFolders() {
     const response = await apiHelper.fetchData(`${BASE_URL}/folders`);
     const result = await response.json();
@@ -12,6 +19,13 @@ const notebookApi = (() => {
     return result.data;
   }
 
+  /**
+   * Membuat folder catatan baru.
+   * @param {string} name - Nama folder.
+   * @param {string} icon - Ikon folder (contoh: "code", "palette").
+   * @param {string} description - Keterangan singkat folder.
+   * @returns {Promise<object>}
+   */
   async function postFolder(name, icon = "folder", description = "") {
     const response = await apiHelper.fetchData(`${BASE_URL}/folders`, {
       method: "POST",
@@ -25,6 +39,11 @@ const notebookApi = (() => {
     return result.data;
   }
 
+  /**
+   * Menghapus folder berdasarkan ID.
+   * @param {number|string} id - ID folder.
+   * @returns {Promise<string>}
+   */
   async function deleteFolder(id) {
     const response = await apiHelper.fetchData(`${BASE_URL}/folders/${id}`, {
       method: "DELETE",
@@ -36,6 +55,12 @@ const notebookApi = (() => {
     return result.message;
   }
 
+  /**
+   * Mengambil daftar catatan berdasarkan filter folder dan kata kunci pencarian.
+   * @param {number|string} folderId - ID folder filter atau "all".
+   * @param {string} searchQuery - Kata kunci pencarian judul atau isi catatan.
+   * @returns {Promise<Array<object>>}
+   */
   async function getNotes(folderId = "all", searchQuery = "") {
     const params = new URLSearchParams();
     if (folderId && folderId !== "all") params.append("folder_id", folderId);
@@ -50,6 +75,11 @@ const notebookApi = (() => {
     return result.data;
   }
 
+  /**
+   * Mengambil detail satu catatan berdasarkan ID.
+   * @param {number|string} id - ID catatan.
+   * @returns {Promise<object>}
+   */
   async function getNoteById(id) {
     const response = await apiHelper.fetchData(`${BASE_URL}/notes/${id}`);
     const result = await response.json();
@@ -59,6 +89,13 @@ const notebookApi = (() => {
     return result.data;
   }
 
+  /**
+   * Membuat catatan baru.
+   * @param {string} title - Judul catatan.
+   * @param {string} content - Konten markdown catatan.
+   * @param {number|string|null} folder_id - ID folder pengelompokan.
+   * @returns {Promise<object>}
+   */
   async function postNote(title, content, folder_id = null) {
     const response = await apiHelper.fetchData(`${BASE_URL}/notes`, {
       method: "POST",
@@ -72,6 +109,14 @@ const notebookApi = (() => {
     return result.data;
   }
 
+  /**
+   * Memperbarui data catatan yang sudah ada.
+   * @param {number|string} id - ID catatan.
+   * @param {string} title - Judul baru.
+   * @param {string} content - Konten baru.
+   * @param {number|string|null} folder_id - ID folder baru.
+   * @returns {Promise<object>}
+   */
   async function putNote(id, title, content, folder_id) {
     const response = await apiHelper.fetchData(`${BASE_URL}/notes/${id}`, {
       method: "PUT",
@@ -85,6 +130,11 @@ const notebookApi = (() => {
     return result.data;
   }
 
+  /**
+   * Menghapus catatan berdasarkan ID.
+   * @param {number|string} id - ID catatan.
+   * @returns {Promise<string>}
+   */
   async function deleteNote(id) {
     const response = await apiHelper.fetchData(`${BASE_URL}/notes/${id}`, {
       method: "DELETE",
@@ -96,6 +146,11 @@ const notebookApi = (() => {
     return result.message;
   }
 
+  /**
+   * Mengunggah gambar ilustrasi/diagram untuk disisipkan ke dalam catatan.
+   * @param {File} file - Objek file gambar.
+   * @returns {Promise<string>} URL gambar yang berhasil diunggah.
+   */
   async function uploadNoteImage(file) {
     const formData = new FormData();
     formData.append("image", file, file.name || "note-image.png");

@@ -70,12 +70,18 @@ export const routes = [
   },
 ];
 
+/**
+ * Factory function untuk membuat instance Vue Router dengan history mode dan auth navigation guard.
+ * @param {import('vue-router').RouterHistory} history - Mode riwayat navigasi (WebHistory / MemoryHistory untuk testing).
+ * @returns {import('vue-router').Router}
+ */
 export function createAppRouter(history = createWebHistory()) {
   const router = createRouter({
     history,
     routes,
   });
 
+  // Global Navigation Guard: Melindungi rute terproteksi (requiresAuth: true)
   router.beforeEach((to) => {
     const token = apiHelper.getAccessToken();
     if (to.meta.requiresAuth && !token) {

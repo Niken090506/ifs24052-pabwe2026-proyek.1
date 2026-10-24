@@ -1,5 +1,8 @@
 import apiHelper from "../../../helpers/apiHelper";
 
+/**
+ * Service API untuk modul autentikasi (Registrasi, Login, dan Logout).
+ */
 const authApi = (() => {
   const BASE_URL = `${DELCOM_BASEURL}/auth`;
 
@@ -7,6 +10,13 @@ const authApi = (() => {
     return BASE_URL + path;
   }
 
+  /**
+   * Mendaftarkan pengguna baru ke sistem.
+   * @param {string} name - Nama lengkap pengguna.
+   * @param {string} email - Alamat email unik.
+   * @param {string} password - Kata sandi akun.
+   * @returns {Promise<string>} Pesan status keberhasilan.
+   */
   async function postRegister(name, email, password) {
     const response = await apiHelper.fetchData(_url("/register"), {
       method: "POST",
@@ -33,6 +43,12 @@ const authApi = (() => {
     return result.message;
   }
 
+  /**
+   * Mengotentikasi kredensial pengguna dan mengembalikan token serta data akun.
+   * @param {string} email - Alamat email atau nama pengguna.
+   * @param {string} password - Kata sandi akun.
+   * @returns {Promise<{token: string, user: object}>}
+   */
   async function postLogin(email, password) {
     const response = await apiHelper.fetchData(_url("/login"), {
       method: "POST",
@@ -53,6 +69,10 @@ const authApi = (() => {
     return result.data;
   }
 
+  /**
+   * Mengakhiri sesi login pengguna aktif.
+   * @returns {Promise<string>} Pesan status logout.
+   */
   async function postLogout() {
     const response = await apiHelper.fetchData(_url("/logout"), {
       method: "POST",

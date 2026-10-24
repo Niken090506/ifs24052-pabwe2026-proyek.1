@@ -1,5 +1,10 @@
 import Swal from "sweetalert2";
 
+/**
+ * Menampilkan modal dialog error interaktif menggunakan SweetAlert2.
+ * @param {string} message - Pesan kesalahan yang akan ditampilkan.
+ * @returns {Promise<any>}
+ */
 export function showErrorDialog(message) {
   return Swal.fire({
     title: "Terjadi Kesalahan",
@@ -15,6 +20,11 @@ export function showErrorDialog(message) {
   });
 }
 
+/**
+ * Menampilkan modal dialog peringatan interaktif menggunakan SweetAlert2.
+ * @param {string} message - Pesan peringatan yang akan ditampilkan.
+ * @returns {Promise<any>}
+ */
 export function showWarningDialog(message) {
   return Swal.fire({
     title: "Peringatan",
@@ -30,6 +40,11 @@ export function showWarningDialog(message) {
   });
 }
 
+/**
+ * Menampilkan modal dialog sukses interaktif menggunakan SweetAlert2.
+ * @param {string} message - Pesan keberhasilan yang akan ditampilkan.
+ * @returns {Promise<any>}
+ */
 export function showSuccessDialog(message) {
   return Swal.fire({
     title: "Tindakan Berhasil",
@@ -45,6 +60,11 @@ export function showSuccessDialog(message) {
   });
 }
 
+/**
+ * Menampilkan modal konfirmasi aksi (Ya / Tidak).
+ * @param {string} message - Pertanyaan konfirmasi untuk pengguna.
+ * @returns {Promise<any>}
+ */
 export function showConfirmDialog(message) {
   return Swal.fire({
     title: "Konfirmasi",
@@ -58,6 +78,11 @@ export function showConfirmDialog(message) {
   });
 }
 
+/**
+ * Memformat tanggal string ISO menjadi format lokal Indonesia yang mudah dibaca.
+ * @param {string|Date} date - String tanggal atau objek Date.
+ * @returns {string} Tanggal terformat (contoh: "24 Oktober 2026 15.30").
+ */
 export function formatDate(date) {
   if (!date) return "-";
   return new Date(date).toLocaleString("id-ID", {
@@ -69,6 +94,11 @@ export function formatDate(date) {
   });
 }
 
+/**
+ * Memformat nominal angka ke format mata uang Rupiah (IDR).
+ * @param {number|string} number - Nilai numerik yang akan diformat.
+ * @returns {string} Format mata uang (contoh: "Rp 150.000").
+ */
 export function formatRupiah(number) {
   if (number === undefined || number === null || number === "" || isNaN(Number(number))) {
     return "Rp 0";
@@ -83,6 +113,11 @@ export function formatRupiah(number) {
   return formatted.replace(/\u00a0/g, " ");
 }
 
+/**
+ * Memastikan URL gambar menggunakan protokol HTTPS yang aman dan valid.
+ * @param {string} url - URL gambar asli.
+ * @returns {string} URL gambar aman (HTTPS).
+ */
 export function formatImageUrl(url) {
   if (!url || typeof url !== "string") return "";
   const trimmed = url.trim();
