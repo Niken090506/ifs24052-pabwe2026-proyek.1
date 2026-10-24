@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from "vue";
 import { useNotebookStore } from "../states/notebookStore";
+import { AVAILABLE_FOLDER_ICONS } from "../../../helpers/notebookHelper";
 
 const props = defineProps({
   isOpen: Boolean,
@@ -13,14 +14,8 @@ const name = ref("");
 const description = ref("");
 const selectedIcon = ref("code");
 
-const icons = [
-  { id: "code", symbol: "</>" },
-  { id: "palette", symbol: "🎨" },
-  { id: "doc", symbol: "📄" },
-  { id: "math", symbol: "+/-" },
-  { id: "chart", symbol: "📈" },
-  { id: "graph", symbol: "⚡" },
-];
+const icons = AVAILABLE_FOLDER_ICONS;
+
 
 async function handleCreate() {
   if (!name.value.trim()) return;

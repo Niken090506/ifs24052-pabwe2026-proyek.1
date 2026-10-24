@@ -1,5 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { getFolderIcon, hasMarkdownImage, FOLDER_ICON_MAP } from "./notebookHelper";
+import {
+  getFolderIcon,
+  hasMarkdownImage,
+  formatNoteTime,
+  FOLDER_ICON_MAP,
+  AVAILABLE_FOLDER_ICONS,
+} from "./notebookHelper";
 
 describe("notebookHelper", () => {
   describe("getFolderIcon", () => {
@@ -22,6 +28,15 @@ describe("notebookHelper", () => {
     });
   });
 
+  describe("AVAILABLE_FOLDER_ICONS", () => {
+    it("should contain standard available icons with id and symbol", () => {
+      expect(Array.isArray(AVAILABLE_FOLDER_ICONS)).toBe(true);
+      expect(AVAILABLE_FOLDER_ICONS.length).toBeGreaterThanOrEqual(6);
+      expect(AVAILABLE_FOLDER_ICONS[0]).toHaveProperty("id");
+      expect(AVAILABLE_FOLDER_ICONS[0]).toHaveProperty("symbol");
+    });
+  });
+
   describe("hasMarkdownImage", () => {
     it("should return false for empty or non-string content", () => {
       expect(hasMarkdownImage("")).toBe(false);
@@ -36,6 +51,20 @@ describe("notebookHelper", () => {
 
     it("should return true when content has markdown image syntax", () => {
       expect(hasMarkdownImage("Lihat diagram ini: ![Diagram](/images/flow.png)")).toBe(true);
+    });
+  });
+
+  describe("formatNoteTime", () => {
+    it("should return 'Today' when dateStr is falsy or invalid", () => {
+      expect(formatNoteTime(null)).toBe("Today");
+      expect(formatNoteTime("")).toBe("Today");
+      expect(formatNoteTime("invalid-date-string")).toBe("Today");
+    });
+
+    it("should format valid ISO date string to localized time string", () => {
+      const formatted = formatNoteTime("2026-10-24T14:30:00Z");
+      expect(typeof formatted).toBe("string");
+      expect(formatted.length).toBeGreaterThan(0);
     });
   });
 });

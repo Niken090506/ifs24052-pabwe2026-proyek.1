@@ -3,11 +3,15 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import db from "../db.js";
-import { getAuthUser } from "../authHelper.js";
+import { requireAuth } from "../middleware/authMiddleware.js";
+import { sanitizeText, parseId } from "../helpers/validationHelper.js";
 
 const router = Router();
 
-// Ensure uploads directory exists (use /tmp/uploads on Vercel)
+// Semua rute catatan wajib terautentikasi secara ketat
+router.use(requireAuth);
+
+// Direktori unggahan berkas gambar catatan
 const uploadDir = process.env.VERCEL
   ? path.join("/tmp", "uploads")
   : path.join(process.cwd(), "public", "uploads");
@@ -21,10 +25,10 @@ if (!fs.existsSync(uploadDir)) {
 }
 
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
+  destination: (_req, _file, cb) => {
     cb(null, uploadDir);
   },
-  filename: (req, file, cb) => {
+  filename: (_req, file, cb) => {
     const ext = path.extname(file.originalname) || ".png";
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e6);
     cb(null, `note-img-${uniqueSuffix}${ext}`);
@@ -33,33 +37,41 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  limits: { fileSize: 5 * 1024 * 1024 }, // Maksimal 5MB
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype.startsWith("image/")) {
+      cb(null, true);
+    } else {
+      cb(new Error("Hanya berkas gambar (PNG, JPG, WEBP, GIF) yang diperbolehkan"), false);
+    }
+  },
 });
 
-// POST /api/v1/notes/upload-image (upload image for note content)
-router.post("/upload-image", upload.single("image"), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ success: false, message: "Pilih file gambar untuk diunggah" });
-  }
+// POST /api/v1/notes/upload-image (Otorisasi ketat)
+router.post("/upload-image", (req, res) => {
+  upload.single("image")(req, res, (err) => {
+    if (err) {
+      return res.status(400).json({ success: false, message: err.message || "Gagal mengunggah gambar" });
+    }
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: "Pilih file gambar untuk diunggah" });
+    }
 
-  const imageUrl = `/uploads/${req.file.filename}`;
-  return res.json({
-    success: true,
-    message: "Gambar berhasil diunggah",
-    data: {
-      url: imageUrl,
-      filename: req.file.originalname,
-    },
+    const imageUrl = `/uploads/${req.file.filename}`;
+    return res.json({
+      success: true,
+      message: "Gambar berhasil diunggah",
+      data: {
+        url: imageUrl,
+        filename: req.file.originalname,
+      },
+    });
   });
 });
 
-// GET /api/v1/notes (scoped to logged-in user)
+// GET /api/v1/notes (Terkunci khusus catatan milik pengguna aktif)
 router.get("/", (req, res) => {
-  const user = getAuthUser(req);
-  if (!user) {
-    return res.json({ success: true, data: [] });
-  }
-
+  const userId = req.user.id;
   const { folder_id, q } = req.query;
 
   let sql = `
@@ -68,16 +80,19 @@ router.get("/", (req, res) => {
     LEFT JOIN folders f ON n.folder_id = f.id 
     WHERE n.user_id = ?
   `;
-  const params = [user.id];
+  const params = [userId];
 
   if (folder_id && folder_id !== "all") {
-    sql += " AND n.folder_id = ?";
-    params.push(folder_id);
+    const parsedFolderId = parseId(folder_id);
+    if (parsedFolderId) {
+      sql += " AND n.folder_id = ?";
+      params.push(parsedFolderId);
+    }
   }
 
-  if (q && q.trim()) {
+  if (q && typeof q === "string" && q.trim()) {
     sql += " AND (n.title LIKE ? OR n.content LIKE ?)";
-    const term = `%${q.trim()}%`;
+    const term = `%${sanitizeText(q)}%`;
     params.push(term, term);
   }
 
@@ -87,50 +102,62 @@ router.get("/", (req, res) => {
   return res.json({ success: true, data: notes });
 });
 
-// GET /api/v1/notes/:id
+// GET /api/v1/notes/:id (Memverifikasi hak milik catatan)
 router.get("/:id", (req, res) => {
-  const { id } = req.params;
+  const userId = req.user.id;
+  const noteId = parseId(req.params.id);
+
+  if (!noteId) {
+    return res.status(400).json({ success: false, message: "ID catatan tidak valid" });
+  }
+
   const note = db
     .prepare(
       `SELECT n.*, f.name as folder_name, f.icon as folder_icon 
        FROM notes n 
        LEFT JOIN folders f ON n.folder_id = f.id 
-       WHERE n.id = ?`
+       WHERE n.id = ? AND n.user_id = ?`
     )
-    .get(id);
+    .get(noteId, userId);
 
   if (!note) {
-    return res.status(404).json({ success: false, message: "Catatan tidak ditemukan" });
+    return res.status(404).json({
+      success: false,
+      message: "Catatan tidak ditemukan atau Anda tidak memiliki akses",
+    });
   }
 
   return res.json({ success: true, data: note });
 });
 
-// POST /api/v1/notes
+// POST /api/v1/notes (Menyimpan catatan berotorisasi ketat)
 router.post("/", (req, res) => {
-  const user = getAuthUser(req);
+  const userId = req.user.id;
   const { title, content, folder_id } = req.body;
-  if (!title || !title.trim()) {
+
+  const cleanTitle = sanitizeText(title);
+  if (!cleanTitle) {
     return res.status(400).json({ success: false, message: "Judul catatan tidak boleh kosong" });
   }
 
-  const userId = user ? user.id : 1;
-  const cleanContent = content || "";
+  const cleanContent = typeof content === "string" ? content : "";
   const lines = cleanContent.split("\n").filter((l) => l.trim() && !l.startsWith("#"));
   const preview = lines.length > 0 ? lines[0].substring(0, 100) : "No preview available";
 
+  const cleanFolderId = parseId(folder_id);
+
   const result = db
     .prepare("INSERT INTO notes (user_id, title, content, preview, folder_id) VALUES (?, ?, ?, ?, ?)")
-    .run(userId, title.trim(), cleanContent, preview, folder_id || null);
+    .run(userId, cleanTitle, cleanContent, preview, cleanFolderId);
 
   const newNote = db
     .prepare(
       `SELECT n.*, f.name as folder_name, f.icon as folder_icon 
        FROM notes n 
        LEFT JOIN folders f ON n.folder_id = f.id 
-       WHERE n.id = ?`
+       WHERE n.id = ? AND n.user_id = ?`
     )
-    .get(result.lastInsertRowid);
+    .get(result.lastInsertRowid, userId);
 
   return res.status(201).json({
     success: true,
@@ -139,19 +166,31 @@ router.post("/", (req, res) => {
   });
 });
 
-// PUT /api/v1/notes/:id
+// PUT /api/v1/notes/:id (Hanya pemilik yang dapat memperbarui catatan)
 router.put("/:id", (req, res) => {
-  const { id } = req.params;
-  const { title, content, folder_id } = req.body;
+  const userId = req.user.id;
+  const noteId = parseId(req.params.id);
 
-  const existing = db.prepare("SELECT * FROM notes WHERE id = ?").get(id);
-  if (!existing) {
-    return res.status(404).json({ success: false, message: "Catatan tidak ditemukan" });
+  if (!noteId) {
+    return res.status(400).json({ success: false, message: "ID catatan tidak valid" });
   }
 
-  const newTitle = title !== undefined ? title : existing.title;
-  const newContent = content !== undefined ? content : existing.content;
-  const newFolderId = folder_id !== undefined ? folder_id : existing.folder_id;
+  const existing = db.prepare("SELECT * FROM notes WHERE id = ? AND user_id = ?").get(noteId, userId);
+  if (!existing) {
+    return res.status(404).json({
+      success: false,
+      message: "Catatan tidak ditemukan atau Anda tidak memiliki hak akses",
+    });
+  }
+
+  const { title, content, folder_id } = req.body;
+  const newTitle = title !== undefined ? sanitizeText(title) : existing.title;
+  if (!newTitle) {
+    return res.status(400).json({ success: false, message: "Judul catatan tidak boleh kosong" });
+  }
+
+  const newContent = content !== undefined && typeof content === "string" ? content : existing.content;
+  const newFolderId = folder_id !== undefined ? parseId(folder_id) : existing.folder_id;
 
   const lines = newContent.split("\n").filter((l) => l.trim() && !l.startsWith("#"));
   const preview = lines.length > 0 ? lines[0].substring(0, 100) : "No preview available";
@@ -159,17 +198,17 @@ router.put("/:id", (req, res) => {
   db.prepare(
     `UPDATE notes 
      SET title = ?, content = ?, preview = ?, folder_id = ?, updated_at = CURRENT_TIMESTAMP 
-     WHERE id = ?`
-  ).run(newTitle, newContent, preview, newFolderId, id);
+     WHERE id = ? AND user_id = ?`
+  ).run(newTitle, newContent, preview, newFolderId, noteId, userId);
 
   const updated = db
     .prepare(
       `SELECT n.*, f.name as folder_name, f.icon as folder_icon 
        FROM notes n 
        LEFT JOIN folders f ON n.folder_id = f.id 
-       WHERE n.id = ?`
+       WHERE n.id = ? AND n.user_id = ?`
     )
-    .get(id);
+    .get(noteId, userId);
 
   return res.json({
     success: true,
@@ -178,15 +217,24 @@ router.put("/:id", (req, res) => {
   });
 });
 
-// DELETE /api/v1/notes/:id
+// DELETE /api/v1/notes/:id (Hanya pemilik yang dapat menghapus catatan)
 router.delete("/:id", (req, res) => {
-  const { id } = req.params;
-  const existing = db.prepare("SELECT * FROM notes WHERE id = ?").get(id);
-  if (!existing) {
-    return res.status(404).json({ success: false, message: "Catatan tidak ditemukan" });
+  const userId = req.user.id;
+  const noteId = parseId(req.params.id);
+
+  if (!noteId) {
+    return res.status(400).json({ success: false, message: "ID catatan tidak valid" });
   }
 
-  db.prepare("DELETE FROM notes WHERE id = ?").run(id);
+  const existing = db.prepare("SELECT * FROM notes WHERE id = ? AND user_id = ?").get(noteId, userId);
+  if (!existing) {
+    return res.status(404).json({
+      success: false,
+      message: "Catatan tidak ditemukan atau Anda tidak memiliki hak akses",
+    });
+  }
+
+  db.prepare("DELETE FROM notes WHERE id = ? AND user_id = ?").run(noteId, userId);
 
   return res.json({
     success: true,

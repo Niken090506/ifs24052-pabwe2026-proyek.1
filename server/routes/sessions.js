@@ -1,29 +1,20 @@
 import { Router } from "express";
 import db from "../db.js";
-import { getAuthUser } from "../authHelper.js";
+import { requireAuth } from "../middleware/authMiddleware.js";
+import { parseId } from "../helpers/validationHelper.js";
 
 const router = Router();
 
-// GET /api/v1/sessions (scoped to logged in user)
+// Semua rute riwayat sesi fokus wajib terautentikasi
+router.use(requireAuth);
+
+// GET /api/v1/sessions (Hanya riwayat sesi milik pengguna aktif)
 router.get("/", (req, res) => {
-  const user = getAuthUser(req);
-  if (!user) {
-    return res.json({
-      success: true,
-      data: {
-        stats: {
-          totalSessions: 0,
-          totalMinutes: 0,
-          totalHours: "0.0",
-        },
-        sessions: [],
-      },
-    });
-  }
+  const userId = req.user.id;
 
   const sessions = db
     .prepare("SELECT * FROM focus_sessions WHERE user_id = ? ORDER BY completed_at DESC LIMIT 50")
-    .all(user.id);
+    .all(userId);
 
   const stats = db
     .prepare(
@@ -33,7 +24,7 @@ router.get("/", (req, res) => {
        FROM focus_sessions
        WHERE user_id = ?`
     )
-    .get(user.id);
+    .get(userId);
 
   return res.json({
     success: true,
@@ -48,17 +39,23 @@ router.get("/", (req, res) => {
   });
 });
 
-// POST /api/v1/sessions
+// POST /api/v1/sessions (Mencatat sesi fokus baru berpemilik ketat)
 router.post("/", (req, res) => {
-  const user = getAuthUser(req);
-  const userId = user ? user.id : 1;
+  const userId = req.user.id;
   const { duration_minutes } = req.body;
-  const minutes = Number(duration_minutes) || 25;
+
+  const minutes = parseId(duration_minutes) || 25;
+  if (minutes < 1 || minutes > 1440) {
+    return res.status(400).json({ success: false, message: "Durasi fokus harus antara 1 hingga 1440 menit" });
+  }
 
   const result = db
     .prepare("INSERT INTO focus_sessions (user_id, duration_minutes) VALUES (?, ?)")
     .run(userId, minutes);
-  const session = db.prepare("SELECT * FROM focus_sessions WHERE id = ?").get(result.lastInsertRowid);
+
+  const session = db
+    .prepare("SELECT * FROM focus_sessions WHERE id = ? AND user_id = ?")
+    .get(result.lastInsertRowid, userId);
 
   return res.status(201).json({
     success: true,
@@ -68,4 +65,3 @@ router.post("/", (req, res) => {
 });
 
 export default router;
-

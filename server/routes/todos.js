@@ -1,17 +1,18 @@
 import { Router } from "express";
 import db from "../db.js";
-import { getAuthUser } from "../authHelper.js";
+import { requireAuth } from "../middleware/authMiddleware.js";
+import { sanitizeText, parseId } from "../helpers/validationHelper.js";
 
 const router = Router();
 
-// GET /api/v1/todos (scoped to logged in user)
-router.get("/", (req, res) => {
-  const user = getAuthUser(req);
-  if (!user) {
-    return res.json({ success: true, data: [] });
-  }
+// Semua rute tasks/todos wajib terautentikasi secara ketat
+router.use(requireAuth);
 
-  const todos = db.prepare("SELECT * FROM todos WHERE user_id = ? ORDER BY id DESC").all(user.id);
+// GET /api/v1/todos (Hanya daftar tugas milik pengguna yang sedang login)
+router.get("/", (req, res) => {
+  const userId = req.user.id;
+
+  const todos = db.prepare("SELECT * FROM todos WHERE user_id = ? ORDER BY id DESC").all(userId);
   return res.json({
     success: true,
     data: todos.map((t) => ({
@@ -23,17 +24,18 @@ router.get("/", (req, res) => {
   });
 });
 
-// POST /api/v1/todos
+// POST /api/v1/todos (Menambah tugas baru dengan otorisasi user)
 router.post("/", (req, res) => {
-  const user = getAuthUser(req);
+  const userId = req.user.id;
   const { title } = req.body;
-  if (!title || !title.trim()) {
+
+  const cleanTitle = sanitizeText(title);
+  if (!cleanTitle) {
     return res.status(400).json({ success: false, message: "Judul tugas tidak boleh kosong" });
   }
 
-  const userId = user ? user.id : 1;
-  const result = db.prepare("INSERT INTO todos (user_id, title, completed) VALUES (?, ?, 0)").run(userId, title.trim());
-  const newTodo = db.prepare("SELECT * FROM todos WHERE id = ?").get(result.lastInsertRowid);
+  const result = db.prepare("INSERT INTO todos (user_id, title, completed) VALUES (?, ?, 0)").run(userId, cleanTitle);
+  const newTodo = db.prepare("SELECT * FROM todos WHERE id = ? AND user_id = ?").get(result.lastInsertRowid, userId);
 
   return res.status(201).json({
     success: true,
@@ -47,26 +49,39 @@ router.post("/", (req, res) => {
   });
 });
 
-// PUT /api/v1/todos/:id
+// PUT /api/v1/todos/:id (Hanya pemilik yang dapat mengubah status/judul tugas)
 router.put("/:id", (req, res) => {
-  const { id } = req.params;
-  const { title, completed } = req.body;
+  const userId = req.user.id;
+  const todoId = parseId(req.params.id);
 
-  const existing = db.prepare("SELECT * FROM todos WHERE id = ?").get(id);
-  if (!existing) {
-    return res.status(404).json({ success: false, message: "Tugas tidak ditemukan" });
+  if (!todoId) {
+    return res.status(400).json({ success: false, message: "ID tugas tidak valid" });
   }
 
-  const newTitle = title !== undefined ? title : existing.title;
+  const existing = db.prepare("SELECT * FROM todos WHERE id = ? AND user_id = ?").get(todoId, userId);
+  if (!existing) {
+    return res.status(404).json({
+      success: false,
+      message: "Tugas tidak ditemukan atau Anda tidak memiliki hak akses",
+    });
+  }
+
+  const { title, completed } = req.body;
+  const newTitle = title !== undefined ? sanitizeText(title) : existing.title;
+  if (!newTitle) {
+    return res.status(400).json({ success: false, message: "Judul tugas tidak boleh kosong" });
+  }
+
   const newCompleted = completed !== undefined ? (completed ? 1 : 0) : existing.completed;
 
-  db.prepare("UPDATE todos SET title = ?, completed = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(
+  db.prepare("UPDATE todos SET title = ?, completed = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?").run(
     newTitle,
     newCompleted,
-    id
+    todoId,
+    userId
   );
 
-  const updated = db.prepare("SELECT * FROM todos WHERE id = ?").get(id);
+  const updated = db.prepare("SELECT * FROM todos WHERE id = ? AND user_id = ?").get(todoId, userId);
 
   return res.json({
     success: true,
@@ -80,15 +95,24 @@ router.put("/:id", (req, res) => {
   });
 });
 
-// DELETE /api/v1/todos/:id
+// DELETE /api/v1/todos/:id (Hanya pemilik yang dapat menghapus tugas)
 router.delete("/:id", (req, res) => {
-  const { id } = req.params;
-  const existing = db.prepare("SELECT * FROM todos WHERE id = ?").get(id);
-  if (!existing) {
-    return res.status(404).json({ success: false, message: "Tugas tidak ditemukan" });
+  const userId = req.user.id;
+  const todoId = parseId(req.params.id);
+
+  if (!todoId) {
+    return res.status(400).json({ success: false, message: "ID tugas tidak valid" });
   }
 
-  db.prepare("DELETE FROM todos WHERE id = ?").run(id);
+  const existing = db.prepare("SELECT * FROM todos WHERE id = ? AND user_id = ?").get(todoId, userId);
+  if (!existing) {
+    return res.status(404).json({
+      success: false,
+      message: "Tugas tidak ditemukan atau Anda tidak memiliki hak akses",
+    });
+  }
+
+  db.prepare("DELETE FROM todos WHERE id = ? AND user_id = ?").run(todoId, userId);
 
   return res.json({
     success: true,

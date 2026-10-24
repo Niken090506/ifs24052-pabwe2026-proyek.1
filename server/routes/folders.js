@@ -1,21 +1,16 @@
 import { Router } from "express";
 import db from "../db.js";
-import { getAuthUser } from "../authHelper.js";
+import { requireAuth } from "../middleware/authMiddleware.js";
+import { sanitizeText, parseId } from "../helpers/validationHelper.js";
 
 const router = Router();
 
-// GET /api/v1/folders (scoped to logged in user)
+// Semua rute folder dilindungi oleh requireAuth
+router.use(requireAuth);
+
+// GET /api/v1/folders (hanya menampilkan folder milik pengguna yang login)
 router.get("/", (req, res) => {
-  const user = getAuthUser(req);
-  if (!user) {
-    return res.json({
-      success: true,
-      data: {
-        totalNotes: 0,
-        folders: [],
-      },
-    });
-  }
+  const userId = req.user.id;
 
   const folders = db
     .prepare(
@@ -26,9 +21,10 @@ router.get("/", (req, res) => {
        GROUP BY f.id 
        ORDER BY f.id ASC`
     )
-    .all(user.id);
+    .all(userId);
 
-  const totalNotes = db.prepare("SELECT COUNT(*) as count FROM notes WHERE user_id = ?").get(user.id).count;
+  const totalNotesRow = db.prepare("SELECT COUNT(*) as count FROM notes WHERE user_id = ?").get(userId);
+  const totalNotes = totalNotesRow ? totalNotesRow.count : 0;
 
   return res.json({
     success: true,
@@ -39,18 +35,26 @@ router.get("/", (req, res) => {
   });
 });
 
-// POST /api/v1/folders
+// POST /api/v1/folders (membuat folder baru berpemilik ketat)
 router.post("/", (req, res) => {
-  const user = getAuthUser(req);
+  const userId = req.user.id;
   const { name, icon, description } = req.body;
-  if (!name || !name.trim()) {
-    return res.status(400).json({ success: false, message: "Nama folder tidak boleh kosong" });
+
+  const cleanName = sanitizeText(name);
+  if (!cleanName) {
+    return res.status(400).json({ success: false, message: "Nama folder wajib diisi dan tidak boleh kosong" });
   }
 
-  const userId = user ? user.id : 1;
+  if (cleanName.length > 50) {
+    return res.status(400).json({ success: false, message: "Nama folder maksimal terdiri dari 50 karakter" });
+  }
+
+  const cleanIcon = sanitizeText(icon) || "folder";
+  const cleanDesc = sanitizeText(description) || "";
+
   const result = db
     .prepare("INSERT INTO folders (user_id, name, icon, description) VALUES (?, ?, ?, ?)")
-    .run(userId, name.trim(), icon || "folder", description || "");
+    .run(userId, cleanName, cleanIcon, cleanDesc);
 
   const newFolder = db.prepare("SELECT * FROM folders WHERE id = ?").get(result.lastInsertRowid);
 
@@ -61,15 +65,24 @@ router.post("/", (req, res) => {
   });
 });
 
-// DELETE /api/v1/folders/:id
+// DELETE /api/v1/folders/:id (verifikasi otorisasi kepemilikan folder)
 router.delete("/:id", (req, res) => {
-  const { id } = req.params;
-  const existing = db.prepare("SELECT * FROM folders WHERE id = ?").get(id);
-  if (!existing) {
-    return res.status(404).json({ success: false, message: "Folder tidak ditemukan" });
+  const userId = req.user.id;
+  const folderId = parseId(req.params.id);
+
+  if (!folderId) {
+    return res.status(400).json({ success: false, message: "ID folder tidak valid" });
   }
 
-  db.prepare("DELETE FROM folders WHERE id = ?").run(id);
+  const existing = db.prepare("SELECT * FROM folders WHERE id = ? AND user_id = ?").get(folderId, userId);
+  if (!existing) {
+    return res.status(404).json({
+      success: false,
+      message: "Folder tidak ditemukan atau Anda tidak memiliki akses untuk menghapusnya",
+    });
+  }
+
+  db.prepare("DELETE FROM folders WHERE id = ? AND user_id = ?").run(folderId, userId);
 
   return res.json({
     success: true,

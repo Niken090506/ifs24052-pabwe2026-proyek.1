@@ -129,12 +129,15 @@ export const useFocusStore = defineStore("focus", {
       const minutesFinished = Math.max(1, Math.round(this.totalSeconds / 60));
       this.remainingSeconds = 0;
 
+      if (!apiHelper.getAccessToken()) return;
+
       try {
-        await apiHelper.fetchData(`${DELCOM_BASEURL}/sessions`, {
+        const response = await apiHelper.fetchData(`${DELCOM_BASEURL}/sessions`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ duration_minutes: minutesFinished }),
         });
+        await apiHelper.handleResponse(response, "Gagal mencatat sesi fokus");
         await this.fetchSessions();
       } catch (err) {
         console.error("Failed to log focus session:", err);
@@ -142,17 +145,20 @@ export const useFocusStore = defineStore("focus", {
     },
 
     async fetchSessions() {
+      if (!apiHelper.getAccessToken()) return;
+
       try {
         const res = await apiHelper.fetchData(`${DELCOM_BASEURL}/sessions`);
-        const json = await res.json();
-        if (json.success) {
-          this.stats = json.data.stats;
-          this.sessions = json.data.sessions;
+        const data = await apiHelper.handleResponse(res, "Gagal mengambil sesi fokus");
+        if (data) {
+          this.stats = data.stats || this.stats;
+          this.sessions = data.sessions || [];
         }
       } catch (err) {
         console.error("Failed to fetch sessions:", err);
       }
     },
+
 
     // Ambient Sound System using YouTube Player and Web Audio synthesis
     toggleAmbient(soundType) {
