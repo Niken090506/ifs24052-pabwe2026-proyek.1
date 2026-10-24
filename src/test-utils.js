@@ -4,9 +4,8 @@ import { createAppRouter } from "./router";
 import { createMemoryHistory } from "vue-router";
 import { useAuthStore } from "./features/auth/states/authStore";
 import { useUsersStore } from "./features/users/states/usersStore";
-import { useAuthStore } from "./features/auth/states/authStore";
-import { useUsersStore } from "./features/users/states/usersStore";
 import { useTodosStore } from "./features/todos/states/todosStore";
+
 
 export function createMockPinia(initialState = {}) {
   const pinia = createPinia();

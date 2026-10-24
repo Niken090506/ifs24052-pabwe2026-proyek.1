@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from "vue";
 import { useFocusStore } from "../states/focusStore";
+import { showWarningDialog } from "../../../helpers/toolsHelper";
 
 const props = defineProps({
   isOpen: Boolean,
@@ -15,7 +16,7 @@ const minutes = ref(45);
 function handleSave() {
   const totalMinutes = Number(hours.value) * 60 + Number(minutes.value);
   if (totalMinutes <= 0) {
-    alert("Silakan masukkan durasi yang valid");
+    showWarningDialog("Silakan masukkan durasi fokus yang valid (minimal 1 menit).");
     return;
   }
   focusStore.setPreset(totalMinutes);

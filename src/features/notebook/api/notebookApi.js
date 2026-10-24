@@ -23,10 +23,13 @@ const notebookApi = (() => {
    * @returns {Promise<object>}
    */
   async function postFolder(name, icon = "folder", description = "") {
+    if (!name || typeof name !== "string" || !name.trim()) {
+      throw new Error("Nama folder wajib diisi");
+    }
     const response = await apiHelper.fetchData(`${BASE_URL}/folders`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, icon, description }),
+      body: JSON.stringify({ name: name.trim(), icon, description }),
     });
     return apiHelper.handleResponse(response, "Gagal membuat folder");
   }
@@ -37,6 +40,9 @@ const notebookApi = (() => {
    * @returns {Promise<string>}
    */
   async function deleteFolder(id) {
+    if (!id) {
+      throw new Error("ID folder tidak valid");
+    }
     const response = await apiHelper.fetchData(`${BASE_URL}/folders/${id}`, {
       method: "DELETE",
     });
@@ -66,6 +72,9 @@ const notebookApi = (() => {
    * @returns {Promise<object>}
    */
   async function getNoteById(id) {
+    if (!id) {
+      throw new Error("ID catatan tidak valid");
+    }
     const response = await apiHelper.fetchData(`${BASE_URL}/notes/${id}`);
     return apiHelper.handleResponse(response, "Catatan tidak ditemukan");
   }
@@ -78,10 +87,13 @@ const notebookApi = (() => {
    * @returns {Promise<object>}
    */
   async function postNote(title, content, folder_id = null) {
+    if (!title || typeof title !== "string" || !title.trim()) {
+      throw new Error("Judul catatan wajib diisi");
+    }
     const response = await apiHelper.fetchData(`${BASE_URL}/notes`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, content, folder_id }),
+      body: JSON.stringify({ title: title.trim(), content: content || "", folder_id }),
     });
     return apiHelper.handleResponse(response, "Gagal menyimpan catatan");
   }
@@ -95,10 +107,16 @@ const notebookApi = (() => {
    * @returns {Promise<object>}
    */
   async function putNote(id, title, content, folder_id) {
+    if (!id) {
+      throw new Error("ID catatan tidak valid");
+    }
+    if (!title || typeof title !== "string" || !title.trim()) {
+      throw new Error("Judul catatan wajib diisi");
+    }
     const response = await apiHelper.fetchData(`${BASE_URL}/notes/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, content, folder_id }),
+      body: JSON.stringify({ title: title.trim(), content: content || "", folder_id }),
     });
     return apiHelper.handleResponse(response, "Gagal memperbarui catatan");
   }
@@ -109,6 +127,9 @@ const notebookApi = (() => {
    * @returns {Promise<string>}
    */
   async function deleteNote(id) {
+    if (!id) {
+      throw new Error("ID catatan tidak valid");
+    }
     const response = await apiHelper.fetchData(`${BASE_URL}/notes/${id}`, {
       method: "DELETE",
     });
@@ -122,6 +143,9 @@ const notebookApi = (() => {
    * @returns {Promise<string>} URL gambar yang berhasil diunggah.
    */
   async function uploadNoteImage(file) {
+    if (!file) {
+      throw new Error("Pilih file gambar untuk diunggah");
+    }
     const formData = new FormData();
     formData.append("image", file, file.name || "note-image.png");
     const response = await apiHelper.fetchData(`${BASE_URL}/notes/upload-image`, {
@@ -131,6 +155,7 @@ const notebookApi = (() => {
     const data = await apiHelper.handleResponse(response, "Gagal mengunggah gambar");
     return data?.url;
   }
+
 
 
   return {

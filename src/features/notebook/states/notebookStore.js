@@ -35,8 +35,10 @@ export const useNotebookStore = defineStore("notebook", {
         const data = await notebookApi.getFolders();
         this.folders = data.folders || [];
         this.totalNotes = data.totalNotes || 0;
+        this.error = null;
       } catch (err) {
-        console.error(err);
+        this.error = err.message || "Gagal mengambil daftar folder";
+        console.error("Notebook fetchFolders error:", err);
       }
     },
 
@@ -47,7 +49,7 @@ export const useNotebookStore = defineStore("notebook", {
         this.notes = data || [];
         this.error = null;
       } catch (err) {
-        this.error = err.message;
+        this.error = err.message || "Gagal mengambil daftar catatan";
       } finally {
         this.loading = false;
       }
@@ -67,10 +69,12 @@ export const useNotebookStore = defineStore("notebook", {
       try {
         const newFolder = await notebookApi.postFolder(name, icon, description);
         this.folders.push(newFolder);
+        this.error = null;
         showSuccessDialog("Folder baru berhasil dibuat!");
         return newFolder;
       } catch (err) {
-        showErrorDialog(err.message || "Gagal membuat folder");
+        this.error = err.message || "Gagal membuat folder";
+        showErrorDialog(this.error);
       }
     },
 
@@ -82,10 +86,12 @@ export const useNotebookStore = defineStore("notebook", {
         // update folder count
         const f = this.folders.find((x) => String(x.id) === String(folderId));
         if (f) f.note_count = (f.note_count || 0) + 1;
+        this.error = null;
         showSuccessDialog("Catatan berhasil disimpan!");
         return newNote;
       } catch (err) {
-        showErrorDialog(err.message || "Gagal menyimpan catatan");
+        this.error = err.message || "Gagal menyimpan catatan";
+        showErrorDialog(this.error);
       }
     },
 
@@ -99,10 +105,12 @@ export const useNotebookStore = defineStore("notebook", {
         if (this.selectedNote && this.selectedNote.id === id) {
           this.selectedNote = updated;
         }
+        this.error = null;
         showSuccessDialog("Catatan berhasil diperbarui!");
         return updated;
       } catch (err) {
-        showErrorDialog(err.message || "Gagal memperbarui catatan");
+        this.error = err.message || "Gagal memperbarui catatan";
+        showErrorDialog(this.error);
       }
     },
 
@@ -114,10 +122,13 @@ export const useNotebookStore = defineStore("notebook", {
         if (this.selectedNote && this.selectedNote.id === id) {
           this.selectedNote = null;
         }
+        this.error = null;
         await this.fetchFolders();
       } catch (err) {
-        showErrorDialog(err.message || "Gagal menghapus catatan");
+        this.error = err.message || "Gagal menghapus catatan";
+        showErrorDialog(this.error);
       }
     },
   },
+
 });

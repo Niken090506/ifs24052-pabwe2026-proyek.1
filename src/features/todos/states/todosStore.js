@@ -24,12 +24,17 @@ export const useTodosStore = defineStore("todos", {
     },
 
     async addTodo(title) {
-      if (!title || !title.trim()) return;
+      if (!title || !title.trim()) {
+        showErrorDialog("Judul tugas tidak boleh kosong");
+        return;
+      }
       try {
         const newTodo = await todoApi.postTodo(title.trim());
         this.todos.unshift(newTodo);
+        this.error = null;
       } catch (err) {
-        showErrorDialog(err.message || "Gagal menambah tugas");
+        this.error = err.message || "Gagal menambah tugas";
+        showErrorDialog(this.error);
       }
     },
 
@@ -39,9 +44,11 @@ export const useTodosStore = defineStore("todos", {
       todo.completed = targetState;
       try {
         await todoApi.putTodo(todo.id, { completed: targetState });
+        this.error = null;
       } catch (err) {
         todo.completed = !targetState; // rollback
-        showErrorDialog(err.message || "Gagal mengubah status tugas");
+        this.error = err.message || "Gagal mengubah status tugas";
+        showErrorDialog(this.error);
       }
     },
 
@@ -50,10 +57,13 @@ export const useTodosStore = defineStore("todos", {
       this.todos = this.todos.filter((t) => t.id !== id);
       try {
         await todoApi.deleteTodo(id);
+        this.error = null;
       } catch (err) {
         this.todos = previous; // rollback
-        showErrorDialog(err.message || "Gagal menghapus tugas");
+        this.error = err.message || "Gagal menghapus tugas";
+        showErrorDialog(this.error);
       }
     },
+
   },
 });

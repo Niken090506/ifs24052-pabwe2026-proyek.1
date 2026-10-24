@@ -12,7 +12,9 @@ export const useUsersStore = defineStore("users", {
     isChangeProfile: false,
     isChangeProfilePhoto: false,
     isChangeProfilePassword: false,
+    error: null,
   }),
+
   actions: {
     setUsers(users) {
       this.users = users;
