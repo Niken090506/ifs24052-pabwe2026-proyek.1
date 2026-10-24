@@ -114,7 +114,7 @@ app.use((err, req, res, next) => {
   res.status(500).json({ success: false, message: "Terjadi kesalahan internal server" });
 });
 
-if (!process.env.VERCEL) {
+if (!process.env.VERCEL && !process.env.VITEST) {
   app
     .listen(PORT, () => {
       console.log(`🚀 Nixbay Express Backend running at http://localhost:${PORT}`);

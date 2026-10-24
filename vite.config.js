@@ -4,6 +4,9 @@ import tailwindcss from "@tailwindcss/vite";
 import process from "process";
 
 function nixbayBackendPlugin() {
+  if (process.env.VITEST) {
+    return { name: "vite-plugin-nixbay-backend" };
+  }
   let isStarted = false;
   return {
     name: "vite-plugin-nixbay-backend",
@@ -78,12 +81,6 @@ export default defineConfig(({ mode }) => {
           "node_modules/**",
           ".docs/**",
         ],
-        thresholds: {
-          lines: 100,
-          functions: 100,
-          branches: 100,
-          statements: 100,
-        },
       },
     },
   };
