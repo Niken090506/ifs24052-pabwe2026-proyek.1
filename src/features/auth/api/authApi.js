@@ -60,13 +60,7 @@ const authApi = (() => {
         password,
       }),
     });
-
-    const result = await response.json();
-    if (result.status !== "success" && !result.success) {
-      throw new Error(result.message || "Gagal login");
-    }
-
-    return result.data;
+    return apiHelper.handleResponse(response, "Gagal login");
   }
 
   /**
@@ -80,14 +74,10 @@ const authApi = (() => {
         "Content-Type": "application/json",
       },
     });
-
-    const result = await response.json();
-    if (result.status !== "success" && !result.success) {
-      throw new Error(result.message || "Gagal logout");
-    }
-
-    return result.message;
+    const result = await apiHelper.handleResponse(response, "Gagal logout");
+    return result.message || "Logout berhasil";
   }
+
 
   return {
     postRegister,

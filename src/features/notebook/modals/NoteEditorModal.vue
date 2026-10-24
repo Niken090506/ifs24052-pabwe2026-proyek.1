@@ -3,6 +3,8 @@ import { ref, watch, computed, nextTick } from "vue";
 import { useNotebookStore } from "../states/notebookStore";
 import notebookApi from "../api/notebookApi";
 import { showErrorDialog } from "../../../helpers/toolsHelper";
+import { renderMarkdownToHtml } from "../../../helpers/markdownHelper";
+import { getFolderIcon } from "../../../helpers/notebookHelper";
 
 const props = defineProps({
   isOpen: Boolean,
@@ -259,109 +261,9 @@ function handleTextareaDrop(e) {
   }
 }
 
-// Markdown Live Renderer
+// Markdown Live Renderer via shared markdownHelper utility
 const renderedHtml = computed(() => {
-  if (!content.value.trim()) {
-    return "<p class='text-slate-400 italic text-sm'>Belum ada konten catatan. Gunakan tab 'Tulis' untuk mulai membuat catatan...</p>";
-  }
-
-  let text = content.value;
-
-  // Escape basic HTML
-  text = text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-
-  // Code blocks: ```lang \n code \n ```
-  text = text.replace(/```([a-z0-9]*)\n([\s\S]*?)```/g, (match, lang, code) => {
-    return `<pre class="my-3 p-3.5 rounded-xl bg-black/60 border border-white/10 overflow-x-auto text-xs font-mono text-amber-200"><code>${code.trim()}</code></pre>`;
-  });
-
-  // Inline code `code`
-  text = text.replace(/`([^`]+)`/g, `<code class="px-1.5 py-0.5 rounded bg-black/50 text-amber-300 font-mono text-xs border border-white/10">$1</code>`);
-
-  // Images: ![alt](url)
-  text = text.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (match, alt, url) => {
-    return `<figure class="my-4 text-center">
-      <img src="${url}" alt="${alt}" class="max-w-full rounded-2xl border border-white/10 shadow-xl object-cover max-h-80 mx-auto hover:scale-[1.01] transition-transform" />
-      ${alt ? `<figcaption class="text-center text-[11px] text-slate-400 mt-1.5 italic">${alt}</figcaption>` : ""}
-    </figure>`;
-  });
-
-  // Links: [text](url)
-  text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, `<a href="$2" target="_blank" rel="noopener noreferrer" class="text-amber-300 hover:text-amber-200 underline font-medium">$1</a>`);
-
-  // Bold & Italic & Strikethrough
-  text = text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
-  text = text.replace(/\*(.*?)\*/g, "<em>$1</em>");
-  text = text.replace(/~~(.*?)~~/g, "<del class='text-slate-400'>$1</del>");
-
-  // Headings
-  text = text.replace(/^#### (.*$)/gim, '<h4 class="text-sm font-bold text-slate-200 mt-3 mb-1 uppercase tracking-wider">$1</h4>');
-  text = text.replace(/^### (.*$)/gim, '<h3 class="text-base font-bold text-amber-100 mt-3.5 mb-1.5">$1</h3>');
-  text = text.replace(/^## (.*$)/gim, '<h2 class="text-lg font-bold text-white mt-4 mb-2 pb-1 border-b border-white/10">$1</h2>');
-  text = text.replace(/^# (.*$)/gim, '<h1 class="text-xl sm:text-2xl font-serif-moda font-normal text-amber-300 mt-5 mb-2 pb-1.5 border-b border-white/15">$1</h1>');
-
-  // Blockquotes
-  text = text.replace(/^> (.*$)/gim, '<blockquote class="my-2.5 pl-3.5 border-l-2 border-amber-400/80 text-slate-300 italic bg-amber-500/5 py-1 rounded-r-lg">$1</blockquote>');
-
-  // Task lists
-  text = text.replace(/^- \[x\] (.*$)/gim, '<div class="flex items-center gap-2 text-emerald-400 my-1"><span class="text-sm">☑</span> <span class="line-through text-slate-400">$1</span></div>');
-  text = text.replace(/^- \[ \] (.*$)/gim, '<div class="flex items-center gap-2 text-slate-200 my-1"><span class="text-sm">☐</span> <span>$1</span></div>');
-
-  // Regular bullet & numbered lists
-  text = text.replace(/^- (.*$)/gim, '<li class="ml-5 list-disc text-slate-200 my-0.5">$1</li>');
-  text = text.replace(/^\d+\. (.*$)/gim, '<li class="ml-5 list-decimal text-slate-200 my-0.5">$1</li>');
-
-  // Simple Markdown table parser
-  const lines = text.split("\n");
-  let inTable = false;
-  let tableHtml = "";
-  const outputLines = [];
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (line.startsWith("|") && line.endsWith("|")) {
-      if (!inTable) {
-        inTable = true;
-        tableHtml = '<div class="my-4 overflow-x-auto rounded-xl border border-white/10 shadow-lg"><table class="w-full text-left text-xs border-collapse">';
-        const cells = line.split("|").slice(1, -1);
-        tableHtml += '<tr class="bg-amber-600/20 text-amber-200 font-bold border-b border-white/10">';
-        cells.forEach((c) => {
-          tableHtml += `<th class="p-2.5 border-r border-white/10 last:border-r-0">${c.trim()}</th>`;
-        });
-        tableHtml += "</tr>";
-      } else if (line.includes("---")) {
-        // Separator row, skip
-      } else {
-        const cells = line.split("|").slice(1, -1);
-        tableHtml += '<tr class="border-b border-white/5 hover:bg-white/5">';
-        cells.forEach((c) => {
-          tableHtml += `<td class="p-2.5 border-r border-white/10 last:border-r-0 text-slate-200">${c.trim()}</td>`;
-        });
-        tableHtml += "</tr>";
-      }
-    } else {
-      if (inTable) {
-        tableHtml += "</table></div>";
-        outputLines.push(tableHtml);
-        inTable = false;
-        tableHtml = "";
-      }
-      outputLines.push(line);
-    }
-  }
-  if (inTable) {
-    tableHtml += "</table></div>";
-    outputLines.push(tableHtml);
-  }
-
-  text = outputLines.join("<br />");
-  // Clean multiple sequential br
-  text = text.replace(/(<br \/>\s*){2,}/g, "<br /><br />");
-
-  return text;
+  return renderMarkdownToHtml(content.value);
 });
 
 async function handleSave() {
@@ -383,25 +285,6 @@ async function handleSave() {
   }
 
   emit("close");
-}
-
-const iconMap = {
-  code: "</>",
-  palette: "🎨",
-  doc: "📄",
-  math: "+/-",
-  chart: "📈",
-  graph: "⚡",
-  database: "🗄️",
-  globe: "🌐",
-  user: "👤",
-  book: "📖",
-  folder: "📁",
-};
-
-function getFolderIcon(icon) {
-  if (!icon) return "📁";
-  return iconMap[icon] || icon;
 }
 </script>
 

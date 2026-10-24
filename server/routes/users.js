@@ -3,10 +3,11 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import db from "../db.js";
+import { getAuthUser, hashPassword, verifyPassword } from "../authHelper.js";
 
 const router = Router();
 
-// Ensure uploads directory exists (use /tmp/uploads on Vercel)
+// Pastikan direktori unggahan foto profil tersedia (gunakan /tmp/uploads di runtime Vercel)
 const uploadDir = process.env.VERCEL
   ? path.join("/tmp", "uploads")
   : path.join(process.cwd(), "public", "uploads");
@@ -20,10 +21,10 @@ if (!fs.existsSync(uploadDir)) {
 }
 
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
+  destination: (_req, _file, cb) => {
     cb(null, uploadDir);
   },
-  filename: (req, file, cb) => {
+  filename: (_req, file, cb) => {
     const ext = path.extname(file.originalname) || ".png";
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e6);
     cb(null, `avatar-${uniqueSuffix}${ext}`);
@@ -32,23 +33,8 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
-  limits: { fileSize: 3 * 1024 * 1024 }, // 3MB limit
+  limits: { fileSize: 3 * 1024 * 1024 }, // Batas 3MB
 });
-
-// Middleware to extract user from Bearer token
-function getAuthUser(req) {
-  const authHeader = req.headers.authorization;
-  if (!authHeader) return null;
-  const token = authHeader.replace(/^Bearer\s+/i, "");
-  try {
-    const decoded = Buffer.from(token, "base64").toString("utf-8");
-    const [userId] = decoded.split(":");
-    if (!userId) return null;
-    return db.prepare("SELECT id, name, email, avatar, created_at FROM users WHERE id = ?").get(userId);
-  } catch {
-    return null;
-  }
-}
 
 function formatUser(user) {
   if (!user) return null;
@@ -58,7 +44,7 @@ function formatUser(user) {
   };
 }
 
-// GET /api/v1/users/me (Secured - cannot be accessed without valid login)
+// GET /api/v1/users/me (Secured)
 router.get("/me", (req, res) => {
   const user = getAuthUser(req);
   if (!user) {
@@ -83,9 +69,9 @@ router.put("/me", (req, res) => {
   const { name, email, password } = req.body;
   const existing = db.prepare("SELECT * FROM users WHERE id = ?").get(user.id);
 
-  const newName = name || existing.name;
-  const newEmail = email || existing.email;
-  const newPassword = password || existing.password;
+  const newName = name ? name.trim() : existing.name;
+  const newEmail = email ? email.trim().toLowerCase() : existing.email;
+  const newPassword = password ? hashPassword(password) : existing.password;
 
   db.prepare("UPDATE users SET name = ?, email = ?, password = ? WHERE id = ?").run(
     newName,
@@ -121,24 +107,51 @@ router.post("/me/photo", upload.single("photo"), (req, res) => {
   });
 });
 
-// PUT /api/v1/users/password (Secured)
+// PUT /api/v1/users/password (Secured - ubah kata sandi dengan validasi keamanan)
 router.put("/password", (req, res) => {
   const user = getAuthUser(req);
   if (!user) {
     return res.status(401).json({ success: false, message: "Akses ditolak" });
   }
-  const { new_password } = req.body;
-  if (new_password) {
-    db.prepare("UPDATE users SET password = ? WHERE id = ?").run(new_password, user.id);
+
+  const { password, new_password, new_password_confirmation } = req.body;
+
+  if (!new_password || new_password.length < 6) {
+    return res.status(400).json({
+      success: false,
+      message: "Kata sandi baru minimal harus terdiri dari 6 karakter",
+    });
   }
+
+  if (new_password_confirmation && new_password !== new_password_confirmation) {
+    return res.status(400).json({
+      success: false,
+      message: "Konfirmasi kata sandi baru tidak cocok",
+    });
+  }
+
+  // Jika kata sandi lama dikirimkan, verifikasi kecocokan
+  if (password) {
+    const fullUser = db.prepare("SELECT password FROM users WHERE id = ?").get(user.id);
+    if (fullUser && !verifyPassword(password, fullUser.password)) {
+      return res.status(400).json({
+        success: false,
+        message: "Kata sandi lama tidak sesuai",
+      });
+    }
+  }
+
+  // Simpan hash kata sandi baru yang aman
+  const secureNewHash = hashPassword(new_password);
+  db.prepare("UPDATE users SET password = ? WHERE id = ?").run(secureNewHash, user.id);
+
   return res.json({ success: true, message: "Kata sandi berhasil diperbarui" });
 });
 
 // GET /api/v1/users (list all users)
-router.get("/", (req, res) => {
+router.get("/", (_req, res) => {
   const users = db.prepare("SELECT id, name, email, avatar, created_at FROM users ORDER BY id ASC").all();
   return res.json({ success: true, data: { users: users.map(formatUser) } });
 });
 
 export default router;
-

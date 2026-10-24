@@ -12,11 +12,7 @@ const notebookApi = (() => {
    */
   async function getFolders() {
     const response = await apiHelper.fetchData(`${BASE_URL}/folders`);
-    const result = await response.json();
-    if (!result.success && result.status !== "success") {
-      throw new Error(result.message || "Gagal mengambil daftar folder");
-    }
-    return result.data;
+    return apiHelper.handleResponse(response, "Gagal mengambil daftar folder");
   }
 
   /**
@@ -32,11 +28,7 @@ const notebookApi = (() => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, icon, description }),
     });
-    const result = await response.json();
-    if (!result.success && result.status !== "success") {
-      throw new Error(result.message || "Gagal membuat folder");
-    }
-    return result.data;
+    return apiHelper.handleResponse(response, "Gagal membuat folder");
   }
 
   /**
@@ -48,11 +40,8 @@ const notebookApi = (() => {
     const response = await apiHelper.fetchData(`${BASE_URL}/folders/${id}`, {
       method: "DELETE",
     });
-    const result = await response.json();
-    if (!result.success && result.status !== "success") {
-      throw new Error(result.message || "Gagal menghapus folder");
-    }
-    return result.message;
+    const result = await apiHelper.handleResponse(response, "Gagal menghapus folder");
+    return result.message || "Berhasil menghapus folder";
   }
 
   /**
@@ -68,11 +57,7 @@ const notebookApi = (() => {
 
     const qs = params.toString() ? `?${params.toString()}` : "";
     const response = await apiHelper.fetchData(`${BASE_URL}/notes${qs}`);
-    const result = await response.json();
-    if (!result.success && result.status !== "success") {
-      throw new Error(result.message || "Gagal mengambil catatan");
-    }
-    return result.data;
+    return apiHelper.handleResponse(response, "Gagal mengambil catatan");
   }
 
   /**
@@ -82,11 +67,7 @@ const notebookApi = (() => {
    */
   async function getNoteById(id) {
     const response = await apiHelper.fetchData(`${BASE_URL}/notes/${id}`);
-    const result = await response.json();
-    if (!result.success && result.status !== "success") {
-      throw new Error(result.message || "Catatan tidak ditemukan");
-    }
-    return result.data;
+    return apiHelper.handleResponse(response, "Catatan tidak ditemukan");
   }
 
   /**
@@ -102,11 +83,7 @@ const notebookApi = (() => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title, content, folder_id }),
     });
-    const result = await response.json();
-    if (!result.success && result.status !== "success") {
-      throw new Error(result.message || "Gagal menyimpan catatan");
-    }
-    return result.data;
+    return apiHelper.handleResponse(response, "Gagal menyimpan catatan");
   }
 
   /**
@@ -123,11 +100,7 @@ const notebookApi = (() => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title, content, folder_id }),
     });
-    const result = await response.json();
-    if (!result.success && result.status !== "success") {
-      throw new Error(result.message || "Gagal memperbarui catatan");
-    }
-    return result.data;
+    return apiHelper.handleResponse(response, "Gagal memperbarui catatan");
   }
 
   /**
@@ -139,11 +112,8 @@ const notebookApi = (() => {
     const response = await apiHelper.fetchData(`${BASE_URL}/notes/${id}`, {
       method: "DELETE",
     });
-    const result = await response.json();
-    if (!result.success && result.status !== "success") {
-      throw new Error(result.message || "Gagal menghapus catatan");
-    }
-    return result.message;
+    const result = await apiHelper.handleResponse(response, "Gagal menghapus catatan");
+    return result.message || "Berhasil menghapus catatan";
   }
 
   /**
@@ -158,12 +128,10 @@ const notebookApi = (() => {
       method: "POST",
       body: formData,
     });
-    const result = await response.json();
-    if (!result.success && result.status !== "success") {
-      throw new Error(result.message || "Gagal mengunggah gambar");
-    }
-    return result.data?.url;
+    const data = await apiHelper.handleResponse(response, "Gagal mengunggah gambar");
+    return data?.url;
   }
+
 
   return {
     getFolders,

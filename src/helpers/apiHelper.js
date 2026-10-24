@@ -65,11 +65,47 @@ const apiHelper = (() => {
     return localStorage.getItem("accessToken");
   }
 
+  /**
+   * Memproses respon HTTP Fetch secara terstandar untuk memvalidasi status dan mengekstrak payload.
+   * @param {Response} response - Respon dari fetch API.
+   * @param {string} [defaultMessage="Terjadi kesalahan pada server"] - Pesan kegagalan default.
+   * @returns {Promise<any>} Objek result.data atau result jika data tidak ada.
+   * @throws {Error} Jika respon HTTP gagal (!ok) atau status API bukan "success".
+   */
+  async function handleResponse(response, defaultMessage = "Terjadi kesalahan pada server") {
+    return handleApiResponse(response, defaultMessage);
+  }
+
   return {
     fetchData,
     putAccessToken,
     getAccessToken,
+    handleResponse,
   };
 })();
 
+/**
+ * Memproses respon HTTP Fetch secara terstandar untuk memvalidasi status dan mengekstrak data.
+ * @param {Response} response - Respon dari fetch API.
+ * @param {string} [defaultMessage="Terjadi kesalahan pada server"] - Pesan kegagalan default.
+ * @returns {Promise<any>} Data respon API.
+ * @throws {Error}
+ */
+export async function handleApiResponse(response, defaultMessage = "Terjadi kesalahan pada server") {
+  let result;
+  try {
+    result = await response.json();
+  } catch (_err) {
+    throw new Error(defaultMessage || "Format respon server tidak valid");
+  }
+
+  if (response.ok === false || (!result.success && result.status !== "success")) {
+    throw new Error(result.message || defaultMessage);
+  }
+
+  return result.data !== undefined ? result.data : result;
+}
+
+
 export default apiHelper;
+

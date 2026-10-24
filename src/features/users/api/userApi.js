@@ -18,13 +18,8 @@ const userApi = (() => {
     const response = await apiHelper.fetchData(_url("/"), {
       method: "GET",
     });
-
-    const result = await response.json();
-    if (result.status !== "success" && !result.success) {
-      throw new Error(result.message || "Gagal mengambil data pengguna");
-    }
-
-    return result.data?.users || [];
+    const data = await apiHelper.handleResponse(response, "Gagal mengambil data pengguna");
+    return data?.users || [];
   }
 
   /**
@@ -36,13 +31,8 @@ const userApi = (() => {
     const response = await apiHelper.fetchData(_url(`/${userId}`), {
       method: "GET",
     });
-
-    const result = await response.json();
-    if (result.status !== "success" && !result.success) {
-      throw new Error(result.message || "Gagal mengambil detail pengguna");
-    }
-
-    return result.data?.user;
+    const data = await apiHelper.handleResponse(response, "Gagal mengambil detail pengguna");
+    return data?.user;
   }
 
   /**
@@ -53,13 +43,8 @@ const userApi = (() => {
     const response = await apiHelper.fetchData(_url("/me"), {
       method: "GET",
     });
-
-    const result = await response.json();
-    if (result.status !== "success" && !result.success) {
-      throw new Error(result.message || "Gagal mengambil data profil");
-    }
-
-    return result.data?.user;
+    const data = await apiHelper.handleResponse(response, "Gagal mengambil data profil");
+    return data?.user;
   }
 
   /**
@@ -79,13 +64,8 @@ const userApi = (() => {
         email,
       }),
     });
-
-    const result = await response.json();
-    if (result.status !== "success" && !result.success) {
-      throw new Error(result.message || "Gagal mengubah profil");
-    }
-
-    return result.data?.user;
+    const data = await apiHelper.handleResponse(response, "Gagal mengubah profil");
+    return data?.user;
   }
 
   /**
@@ -100,12 +80,7 @@ const userApi = (() => {
       method: "POST",
       body: formData,
     });
-
-    const result = await response.json();
-    if (result.status !== "success" && !result.success) {
-      throw new Error(result.message || "Gagal mengubah foto profil");
-    }
-
+    const result = await apiHelper.handleResponse(response, "Gagal mengubah foto profil");
     return result.message;
   }
 
@@ -128,14 +103,10 @@ const userApi = (() => {
         new_password_confirmation: newPasswordConfirmation || newPassword,
       }),
     });
-
-    const result = await response.json();
-    if (result.status !== "success" && !result.success) {
-      throw new Error(result.message || "Gagal mengubah kata sandi");
-    }
-
+    const result = await apiHelper.handleResponse(response, "Gagal mengubah kata sandi");
     return result.message;
   }
+
 
   return {
     getUsers,

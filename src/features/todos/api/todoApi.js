@@ -16,11 +16,7 @@ const todoApi = (() => {
    */
   async function getTodos() {
     const response = await apiHelper.fetchData(_url());
-    const result = await response.json();
-    if (!result.success && result.status !== "success") {
-      throw new Error(result.message || "Gagal mengambil daftar tugas");
-    }
-    return result.data;
+    return apiHelper.handleResponse(response, "Gagal mengambil daftar tugas");
   }
 
   /**
@@ -36,11 +32,7 @@ const todoApi = (() => {
       },
       body: JSON.stringify({ title }),
     });
-    const result = await response.json();
-    if (!result.success && result.status !== "success") {
-      throw new Error(result.message || "Gagal menambahkan tugas");
-    }
-    return result.data;
+    return apiHelper.handleResponse(response, "Gagal menambahkan tugas");
   }
 
   /**
@@ -57,11 +49,7 @@ const todoApi = (() => {
       },
       body: JSON.stringify(data),
     });
-    const result = await response.json();
-    if (!result.success && result.status !== "success") {
-      throw new Error(result.message || "Gagal memperbarui tugas");
-    }
-    return result.data;
+    return apiHelper.handleResponse(response, "Gagal memperbarui tugas");
   }
 
   /**
@@ -73,12 +61,10 @@ const todoApi = (() => {
     const response = await apiHelper.fetchData(_url(`/${id}`), {
       method: "DELETE",
     });
-    const result = await response.json();
-    if (!result.success && result.status !== "success") {
-      throw new Error(result.message || "Gagal menghapus tugas");
-    }
-    return result.message;
+    const result = await apiHelper.handleResponse(response, "Gagal menghapus tugas");
+    return result.message || "Berhasil menghapus tugas";
   }
+
 
   return {
     getTodos,

@@ -51,4 +51,43 @@ describe("apiHelper", () => {
       })
     );
   });
+
+  it("should extract data from successful API response using handleResponse", async () => {
+    const mockResponse = {
+      ok: true,
+      json: vi.fn().mockResolvedValue({
+        success: true,
+        data: { id: 1, name: "Niken" },
+      }),
+    };
+
+    const data = await apiHelper.handleResponse(mockResponse);
+    expect(data).toEqual({ id: 1, name: "Niken" });
+  });
+
+  it("should throw error when API response indicates failure", async () => {
+    const mockResponse = {
+      ok: false,
+      json: vi.fn().mockResolvedValue({
+        success: false,
+        message: "Email atau kata sandi salah",
+      }),
+    };
+
+    await expect(apiHelper.handleResponse(mockResponse)).rejects.toThrow(
+      "Email atau kata sandi salah"
+    );
+  });
+
+  it("should throw default message if JSON parsing fails", async () => {
+    const mockResponse = {
+      ok: false,
+      json: vi.fn().mockRejectedValue(new Error("Invalid JSON")),
+    };
+
+    await expect(
+      apiHelper.handleResponse(mockResponse, "Gagal memproses server")
+    ).rejects.toThrow("Gagal memproses server");
+  });
 });
+

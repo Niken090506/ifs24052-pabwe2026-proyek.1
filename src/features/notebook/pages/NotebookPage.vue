@@ -3,6 +3,7 @@ import { ref, onMounted } from "vue";
 import { useNotebookStore } from "../states/notebookStore";
 import AddFolderModal from "../modals/AddFolderModal.vue";
 import NoteEditorModal from "../modals/NoteEditorModal.vue";
+import { getFolderIcon } from "../../../helpers/notebookHelper";
 
 const notebookStore = useNotebookStore();
 const isFolderModalOpen = ref(false);
@@ -28,25 +29,6 @@ function formatNoteTime(dateStr) {
   if (!dateStr) return "Today";
   const date = new Date(dateStr);
   return date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
-}
-
-const iconMap = {
-  code: "</>",
-  palette: "🎨",
-  doc: "📄",
-  math: "+/-",
-  chart: "📈",
-  graph: "⚡",
-  database: "🗄️",
-  globe: "🌐",
-  user: "👤",
-  book: "📖",
-  folder: "📁",
-};
-
-function getFolderIcon(icon) {
-  if (!icon) return "📁";
-  return iconMap[icon] || icon;
 }
 
 function getActiveFolderIcon() {
