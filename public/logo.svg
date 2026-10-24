@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f59e0b" />
+      <stop offset="100%" stop-color="#b45309" />
+    </linearGradient>
+  </defs>
+  <circle cx="50" cy="50" r="46" fill="#1e1815" stroke="url(#grad)" stroke-width="3"/>
+  <!-- Open Book & Glow -->
+  <path d="M26 62C32 58 42 58 50 62C58 58 68 58 74 62V38C68 34 58 34 50 38C42 34 32 34 26 38V62Z" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M50 38V62" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Gentle Sparkle/Glow -->
+  <circle cx="50" cy="26" r="3" fill="#fde68a"/>
+  <path d="M50 20V22M50 30V32M44 26H46M54 26H56" stroke="#fde68a" stroke-width="1.5" stroke-linecap="round"/>
+</svg>
