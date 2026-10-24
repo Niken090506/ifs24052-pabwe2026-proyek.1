@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import path from "path";
 import fs from "fs";
+import { fileURLToPath } from "url";
 
 import authRoutes from "./routes/auth.js";
 import todosRoutes from "./routes/todos.js";
@@ -59,6 +60,42 @@ app.use("/api/v1/users", usersRoutes);
 // Health check
 app.get("/api/v1/health", (req, res) => {
   res.json({ status: "ok", app: "Nixbay API", timestamp: new Date().toISOString() });
+});
+
+const currentDir = path.dirname(fileURLToPath(import.meta.url));
+let cachedHtml = null;
+function getIndexHtml() {
+  if (cachedHtml) return cachedHtml;
+  const pathsToTry = [
+    path.join(process.cwd(), "dist", "index.html"),
+    path.join(process.cwd(), "index.html"),
+    path.join(currentDir, "..", "dist", "index.html"),
+    path.join(currentDir, "..", "index.html"),
+  ];
+  for (const p of pathsToTry) {
+    if (fs.existsSync(p)) {
+      try {
+        cachedHtml = fs.readFileSync(p, "utf-8");
+        return cachedHtml;
+      } catch (e) {}
+    }
+  }
+  return null;
+}
+
+// SPA HTML fallback: Always returns 200 OK to prevent 304 Not Modified errors
+app.use((req, res, next) => {
+  if (req.method !== "GET") {
+    return next();
+  }
+  if (req.path.startsWith("/api/")) {
+    return next();
+  }
+  const html = getIndexHtml();
+  if (html) {
+    return res.status(200).type("html").send(html);
+  }
+  next();
 });
 
 // Error handling fallback

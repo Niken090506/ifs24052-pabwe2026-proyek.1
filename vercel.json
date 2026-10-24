@@ -21,7 +21,7 @@
   ],
   "functions": {
     "api/index.js": {
-      "includeFiles": "server/**"
+      "includeFiles": "{server/**,dist/**,index.html}"
     }
   },
   "rewrites": [
@@ -31,6 +31,26 @@
     },
     {
       "source": "/uploads/(.*)",
+      "destination": "/api"
+    },
+    {
+      "source": "/auth/(.*)",
+      "destination": "/api"
+    },
+    {
+      "source": "/notebook",
+      "destination": "/api"
+    },
+    {
+      "source": "/progress",
+      "destination": "/api"
+    },
+    {
+      "source": "/users",
+      "destination": "/api"
+    },
+    {
+      "source": "/profile",
       "destination": "/api"
     },
     {
