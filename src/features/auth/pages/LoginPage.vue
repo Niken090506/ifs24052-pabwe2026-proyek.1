@@ -77,6 +77,7 @@ import { Mail, Lock, Loader2, LogIn } from "lucide-vue-next";
 import { useAuthStore } from "../states/authStore";
 import { useUsersStore } from "../../users/states/usersStore";
 import apiHelper from "../../../helpers/apiHelper";
+import { showErrorDialog } from "../../../helpers/toolsHelper";
 
 const router = useRouter();
 const route = useRoute();
@@ -123,9 +124,18 @@ watch(
 );
 
 async function onSubmitHandler() {
+  if (!email.value || !email.value.trim()) {
+    showErrorDialog("Alamat email atau username wajib diisi!");
+    return;
+  }
+  if (!password.value) {
+    showErrorDialog("Kata sandi wajib diisi!");
+    return;
+  }
+
   loading.value = true;
   try {
-    await authStore.asyncSetIsAuthLogin(email.value, password.value);
+    await authStore.asyncSetIsAuthLogin(email.value.trim(), password.value);
     if (!apiHelper.getAccessToken()) {
       loading.value = false;
     }

@@ -92,6 +92,8 @@ import { ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { User, Mail, Lock, Loader2, UserPlus } from "lucide-vue-next";
 import { useAuthStore } from "../states/authStore";
+import { showErrorDialog } from "../../../helpers/toolsHelper";
+import { isValidEmail, validatePassword, validateRequiredText } from "../../../helpers/validationHelper";
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -118,9 +120,24 @@ watch(
 );
 
 async function onSubmitHandler() {
+  const nameVal = validateRequiredText(name.value, "Nama Lengkap", 50);
+  if (!nameVal.isValid) {
+    showErrorDialog(nameVal.message);
+    return;
+  }
+  if (!isValidEmail(email.value)) {
+    showErrorDialog("Alamat email tidak valid. Masukkan format email yang benar!");
+    return;
+  }
+  const passVal = validatePassword(password.value, 6);
+  if (!passVal.isValid) {
+    showErrorDialog(passVal.message);
+    return;
+  }
+
   loading.value = true;
   try {
-    await authStore.asyncSetIsAuthRegister(name.value, email.value, password.value);
+    await authStore.asyncSetIsAuthRegister(name.value.trim(), email.value.trim(), password.value);
   } finally {
     loading.value = false;
   }

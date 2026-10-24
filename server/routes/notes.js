@@ -1,9 +1,7 @@
 import { Router } from "express";
-import multer from "multer";
-import path from "path";
-import fs from "fs";
 import db from "../db.js";
 import { requireAuth } from "../middleware/authMiddleware.js";
+import { createImageUploader } from "../middleware/uploadMiddleware.js";
 import { sanitizeText, parseId } from "../helpers/validationHelper.js";
 
 const router = Router();
@@ -11,41 +9,8 @@ const router = Router();
 // Semua rute catatan wajib terautentikasi secara ketat
 router.use(requireAuth);
 
-// Direktori unggahan berkas gambar catatan
-const uploadDir = process.env.VERCEL
-  ? path.join("/tmp", "uploads")
-  : path.join(process.cwd(), "public", "uploads");
+const upload = createImageUploader({ prefix: "note-img", maxSizeMB: 5 });
 
-if (!fs.existsSync(uploadDir)) {
-  try {
-    fs.mkdirSync(uploadDir, { recursive: true });
-  } catch (e) {
-    console.warn("Could not create upload directory:", e);
-  }
-}
-
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname) || ".png";
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e6);
-    cb(null, `note-img-${uniqueSuffix}${ext}`);
-  },
-});
-
-const upload = multer({
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // Maksimal 5MB
-  fileFilter: (_req, file, cb) => {
-    if (file.mimetype.startsWith("image/")) {
-      cb(null, true);
-    } else {
-      cb(new Error("Hanya berkas gambar (PNG, JPG, WEBP, GIF) yang diperbolehkan"), false);
-    }
-  },
-});
 
 // POST /api/v1/notes/upload-image (Otorisasi ketat)
 router.post("/upload-image", (req, res) => {

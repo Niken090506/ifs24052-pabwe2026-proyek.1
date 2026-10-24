@@ -1,4 +1,5 @@
 import apiHelper from "../../../helpers/apiHelper";
+import { uploadImageFile } from "../../../helpers/uploadHelper";
 
 /**
  * Service API untuk modul data pengguna dan profil akun.
@@ -74,13 +75,13 @@ const userApi = (() => {
    * @returns {Promise<string>} Pesan status keberhasilan.
    */
   async function postProfilePhoto(photo) {
-    const formData = new FormData();
-    formData.append("photo", photo, photo.name || "profile.png");
-    const response = await apiHelper.fetchData(_url("/me/photo"), {
-      method: "POST",
-      body: formData,
-    });
-    const result = await apiHelper.handleResponse(response, "Gagal mengubah foto profil");
+    const result = await uploadImageFile(
+      "/users/me/photo",
+      photo,
+      "photo",
+      3,
+      "Gagal mengubah foto profil"
+    );
     return result.message;
   }
 

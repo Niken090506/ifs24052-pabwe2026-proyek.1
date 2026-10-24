@@ -1,10 +1,8 @@
 import { Router } from "express";
-import multer from "multer";
-import path from "path";
-import fs from "fs";
 import db from "../db.js";
 import { hashPassword, verifyPassword } from "../authHelper.js";
 import { requireAuth } from "../middleware/authMiddleware.js";
+import { createImageUploader } from "../middleware/uploadMiddleware.js";
 import { sanitizeText, isValidEmail } from "../helpers/validationHelper.js";
 
 const router = Router();
@@ -12,41 +10,8 @@ const router = Router();
 // Semua rute pengguna wajib terotorisasi ketat
 router.use(requireAuth);
 
-// Pastikan direktori unggahan foto profil tersedia (gunakan /tmp/uploads di runtime Vercel)
-const uploadDir = process.env.VERCEL
-  ? path.join("/tmp", "uploads")
-  : path.join(process.cwd(), "public", "uploads");
+const upload = createImageUploader({ prefix: "avatar", maxSizeMB: 3 });
 
-if (!fs.existsSync(uploadDir)) {
-  try {
-    fs.mkdirSync(uploadDir, { recursive: true });
-  } catch (e) {
-    console.warn("Could not create upload directory:", e);
-  }
-}
-
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname) || ".png";
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e6);
-    cb(null, `avatar-${uniqueSuffix}${ext}`);
-  },
-});
-
-const upload = multer({
-  storage,
-  limits: { fileSize: 3 * 1024 * 1024 }, // Batas 3MB
-  fileFilter: (_req, file, cb) => {
-    if (file.mimetype.startsWith("image/")) {
-      cb(null, true);
-    } else {
-      cb(new Error("Hanya berkas gambar yang diperbolehkan untuk foto profil"), false);
-    }
-  },
-});
 
 function formatUser(user) {
   if (!user) return null;

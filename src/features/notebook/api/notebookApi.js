@@ -1,4 +1,5 @@
 import apiHelper from "../../../helpers/apiHelper";
+import { uploadImageFile } from "../../../helpers/uploadHelper";
 
 /**
  * Service API untuk modul buku catatan (Notebook, Folder, Catatan, dan Unggah Gambar).
@@ -143,16 +144,7 @@ const notebookApi = (() => {
    * @returns {Promise<string>} URL gambar yang berhasil diunggah.
    */
   async function uploadNoteImage(file) {
-    if (!file) {
-      throw new Error("Pilih file gambar untuk diunggah");
-    }
-    const formData = new FormData();
-    formData.append("image", file, file.name || "note-image.png");
-    const response = await apiHelper.fetchData(`${BASE_URL}/notes/upload-image`, {
-      method: "POST",
-      body: formData,
-    });
-    const data = await apiHelper.handleResponse(response, "Gagal mengunggah gambar");
+    const data = await uploadImageFile("/notes/upload-image", file, "image", 5);
     return data?.url;
   }
 

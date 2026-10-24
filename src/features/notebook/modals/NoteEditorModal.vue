@@ -5,6 +5,7 @@ import notebookApi from "../api/notebookApi";
 import { showErrorDialog } from "../../../helpers/toolsHelper";
 import { renderMarkdownToHtml } from "../../../helpers/markdownHelper";
 import { getFolderIcon } from "../../../helpers/notebookHelper";
+import { useMarkdownFormatter } from "../composables/useMarkdownFormatter";
 import NoteEditorToolbar from "../components/NoteEditorToolbar.vue";
 import NoteImageInsertModal from "./NoteImageInsertModal.vue";
 
@@ -42,143 +43,21 @@ watch(
   { immediate: true }
 );
 
-// Cursor and text selection manipulation helper
-function getSelectionInfo() {
-  const el = textareaRef.value;
-  if (!el) return { start: 0, end: 0, text: "" };
-  const start = el.selectionStart || 0;
-  const end = el.selectionEnd || 0;
-  const text = content.value.substring(start, end);
-  return { start, end, text, el };
-}
-
-function insertFormatting(prefix, suffix, placeholder = "teks") {
-  const { start, end, text, el } = getSelectionInfo();
-  const selected = text || placeholder;
-  const replacement = `${prefix}${selected}${suffix}`;
-  content.value =
-    content.value.substring(0, start) +
-    replacement +
-    content.value.substring(end);
-
-  nextTick(() => {
-    if (el) {
-      el.focus();
-      const newCursor = start + prefix.length + selected.length;
-      el.setSelectionRange(newCursor, newCursor);
-    }
-  });
-}
-
-function insertHeading(level) {
-  const { start, end, el } = getSelectionInfo();
-  const hashes = "#".repeat(level) + " ";
-  content.value =
-    content.value.substring(0, start) +
-    `\n${hashes}Heading ${level}\n` +
-    content.value.substring(end);
-
-  nextTick(() => {
-    if (el) el.focus();
-  });
-}
-
-function insertList(type) {
-  const { start, end, el } = getSelectionInfo();
-  let textToInsert = "";
-  if (type === "bullet") {
-    textToInsert = "\n- Item 1\n- Item 2\n- Item 3\n";
-  } else if (type === "number") {
-    textToInsert = "\n1. Item 1\n2. Item 2\n3. Item 3\n";
-  } else if (type === "task") {
-    textToInsert = "\n- [ ] Task yang harus dikerjakan\n- [x] Task yang sudah selesai\n";
-  }
-
-  content.value =
-    content.value.substring(0, start) +
-    textToInsert +
-    content.value.substring(end);
-
-  nextTick(() => {
-    if (el) el.focus();
-  });
-}
-
-function insertTable(rows = 3, cols = 3) {
-  let header = "|";
-  let separator = "|";
-  for (let c = 1; c <= cols; c++) {
-    header += ` Kolom ${c} |`;
-    separator += " --- |";
-  }
-  let body = "";
-  for (let r = 1; r <= rows; r++) {
-    body += "\n|";
-    for (let c = 1; c <= cols; c++) {
-      body += ` Data ${r},${c} |`;
-    }
-  }
-
-  const tableMd = `\n${header}\n${separator}${body}\n`;
-  const { start, end, el } = getSelectionInfo();
-  content.value =
-    content.value.substring(0, start) + tableMd + content.value.substring(end);
-
-  nextTick(() => {
-    if (el) el.focus();
-  });
-}
-
-function insertLink() {
-  const url = prompt("Masukkan URL tautan:", "https://");
-  if (!url) return;
-  const { start, end, text, el } = getSelectionInfo();
-  const label = text || "Tautan";
-  const linkMd = `[${label}](${url})`;
-  content.value =
-    content.value.substring(0, start) + linkMd + content.value.substring(end);
-
-  nextTick(() => {
-    if (el) el.focus();
-  });
-}
-
-function insertQuote() {
-  insertFormatting("\n> ", "\n", "Kutipan atau poin penting...");
-}
-
-function insertCodeBlock() {
-  insertFormatting("\n```javascript\n", "\n```\n", "// Tulis kode di sini");
-}
-
-function clearFormatting() {
-  const { start, end, text, el } = getSelectionInfo();
-  if (!text) return;
-  const cleaned = text
-    .replace(/^#+\s+/gm, "")
-    .replace(/(\*\*|__)(.*?)\1/g, "$2")
-    .replace(/(\*|_)(.*?)\1/g, "$2")
-    .replace(/~~(.*?)~~/g, "$1")
-    .replace(/`{1,3}(.*?)`{1,3}/g, "$1")
-    .replace(/^>\s+/gm, "")
-    .replace(/^-\s+/gm, "")
-    .replace(/^\d+\.\s+/gm, "");
-
-  content.value =
-    content.value.substring(0, start) + cleaned + content.value.substring(end);
-
-  nextTick(() => {
-    if (el) el.focus();
-  });
-}
+// Markdown formatting and cursor manipulation extracted to composable
+const {
+  insertFormatting,
+  insertHeading,
+  insertList,
+  insertTable,
+  insertLink,
+  insertQuote,
+  insertCodeBlock,
+  insertImageMarkdown,
+  clearFormatting,
+} = useMarkdownFormatter(content, textareaRef);
 
 function handleInsertImageMd(mdImg) {
-  const { start, end, el } = getSelectionInfo();
-  content.value =
-    content.value.substring(0, start) + mdImg + content.value.substring(end);
-  nextTick(() => {
-    if (el) el.focus();
-  });
+  insertImageMarkdown(mdImg);
 }
 
 // Drag & drop image directly to textarea

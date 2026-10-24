@@ -206,6 +206,7 @@
 import { ref, computed, watch, onMounted } from "vue";
 import { useUsersStore } from "../states/usersStore";
 import { showErrorDialog, formatImageUrl } from "../../../helpers/toolsHelper";
+import { isValidEmail, validatePassword, validateRequiredText, validateImageFile } from "../../../helpers/validationHelper";
 import { User, Camera, Check, Loader2, ShieldCheck } from "lucide-vue-next";
 
 const usersStore = useUsersStore();
@@ -279,6 +280,10 @@ function handleUpdateProfile() {
     showErrorDialog("Email tidak boleh kosong!");
     return;
   }
+  if (!isValidEmail(email.value.trim())) {
+    showErrorDialog("Format email tidak valid!");
+    return;
+  }
   loadingProfile.value = true;
   usersStore.asyncPutProfile(name.value.trim(), email.value.trim());
 }
@@ -287,7 +292,7 @@ function handlePhotoUpload(e) {
   const file = e.target.files?.[0];
   if (!file) return;
 
-  if (!file.type.startsWith("image/")) {
+  if (!file.type || !file.type.startsWith("image/")) {
     showErrorDialog("Pilih file gambar yang valid!");
     return;
   }
