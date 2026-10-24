@@ -3,7 +3,7 @@
     <!-- Cozy Wallpaper Desk Background -->
     <div
       class="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
-      :style="{ backgroundImage: `url('/assets/desk-bg.jpg')` }"
+      :style="{ backgroundImage: `url('/assets/desk-bg.webp')` }"
     >
       <div class="absolute inset-0 bg-stone-950/70 backdrop-blur-md"></div>
     </div>
@@ -40,7 +40,7 @@
           type="button"
           data-testid="home-btn"
           @click="router.push('/')"
-          class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-xs text-white bg-amber-600 hover:bg-amber-500 shadow-lg shadow-amber-600/30 transition-all cursor-pointer"
+          class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs text-white bg-amber-800 hover:bg-amber-700 shadow-lg shadow-amber-900/40 transition-all cursor-pointer"
         >
           <Home :size="16" />
           <span>Ke Halaman Utama</span>

@@ -36,7 +36,7 @@
 
         <label
           data-testid="upload-profile-photo-btn"
-          class="absolute bottom-0 right-0 p-2 rounded-full bg-amber-600 hover:bg-amber-500 text-white shadow-md cursor-pointer transition-transform hover:scale-105"
+          class="absolute bottom-0 right-0 p-2 rounded-full bg-amber-800 hover:bg-amber-700 text-white shadow-md cursor-pointer transition-transform hover:scale-105"
           title="Ubah Foto Profil"
         >
           <Loader2 v-if="loadingPhoto" :size="16" class="animate-spin" />
@@ -112,7 +112,7 @@
               type="submit"
               data-testid="submit-profile-btn"
               :disabled="loadingProfile"
-              class="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-amber-600 hover:bg-amber-500 active:bg-amber-700 rounded-xl shadow-lg shadow-amber-600/30 transition-all disabled:opacity-60"
+              class="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-bold text-white bg-amber-800 hover:bg-amber-700 active:bg-amber-900 rounded-xl shadow-lg shadow-amber-900/40 transition-all disabled:opacity-60"
             >
               <template v-if="loadingProfile">
                 <Loader2 :size="18" class="animate-spin" />

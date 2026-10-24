@@ -63,7 +63,7 @@ async function handleSubmit() {
           </button>
           <button
             type="submit"
-            class="px-5 py-2 rounded-xl text-sm font-semibold bg-amber-600 hover:bg-amber-500 text-white shadow-lg shadow-amber-600/30 transition-all"
+            class="px-5 py-2 rounded-xl text-sm font-bold bg-amber-800 hover:bg-amber-700 text-white shadow-lg shadow-amber-900/40 transition-all"
           >
             Add Task
           </button>

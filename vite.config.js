@@ -48,6 +48,20 @@ export default defineConfig(({ mode }) => {
         env.VITE_DELCOM_BASEURL || "/api/v1"
       ),
     },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes("@toast-ui")) {
+              return "toastui";
+            }
+            if (id.includes("node_modules/sweetalert2")) {
+              return "sweetalert";
+            }
+          },
+        },
+      },
+    },
     test: {
       globals: true,
       environment: "jsdom",

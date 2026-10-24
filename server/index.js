@@ -37,7 +37,12 @@ app.use("/uploads", express.static(uploadDir));
 app.disable("etag");
 
 app.use((req, res, next) => {
-  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0");
+  // Strip conditional headers to guarantee a 200 OK response (prevent 304 from testing bots)
+  delete req.headers["if-modified-since"];
+  delete req.headers["if-none-match"];
+  res.removeHeader("ETag");
+  res.removeHeader("Last-Modified");
+  res.setHeader("Cache-Control", "no-cache, must-revalidate, max-age=0");
   res.setHeader("Pragma", "no-cache");
   res.setHeader("Expires", "0");
   next();
@@ -47,6 +52,11 @@ app.use((req, res, next) => {
 app.use((req, res, next) => {
   console.log(`[API] ${req.method} ${req.url}`);
   next();
+});
+
+// robots.txt route (valid plain text)
+app.get("/robots.txt", (req, res) => {
+  res.type("text/plain").send("User-agent: *\nAllow: /\n");
 });
 
 // API Routes

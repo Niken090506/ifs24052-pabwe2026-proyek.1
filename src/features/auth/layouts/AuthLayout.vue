@@ -3,7 +3,7 @@
     <!-- Cozy Desk Background -->
     <div
       class="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
-      :style="{ backgroundImage: `url('/assets/desk-bg.jpg')` }"
+      :style="{ backgroundImage: `url('/assets/desk-bg.webp')` }"
     >
       <div class="absolute inset-0 bg-stone-950/70 backdrop-blur-md"></div>
     </div>
@@ -27,15 +27,15 @@
         <div class="flex rounded-2xl bg-black/40 border border-white/10 p-1 mb-6">
           <RouterLink
             to="/auth/login"
-            class="flex-1 py-2 text-center text-xs font-semibold rounded-xl transition-all"
-            :class="isLoginActive ? 'bg-amber-600/80 text-white shadow-md' : 'text-slate-400 hover:text-white'"
+            class="flex-1 py-2 text-center text-xs font-bold rounded-xl transition-all"
+            :class="isLoginActive ? 'bg-amber-700 text-white shadow-md' : 'text-slate-300 hover:text-white'"
           >
             Masuk Akun
           </RouterLink>
           <RouterLink
             to="/auth/register"
-            class="flex-1 py-2 text-center text-xs font-semibold rounded-xl transition-all"
-            :class="!isLoginActive ? 'bg-amber-600/80 text-white shadow-md' : 'text-slate-400 hover:text-white'"
+            class="flex-1 py-2 text-center text-xs font-bold rounded-xl transition-all"
+            :class="!isLoginActive ? 'bg-amber-700 text-white shadow-md' : 'text-slate-300 hover:text-white'"
           >
             Daftar Baru
           </RouterLink>

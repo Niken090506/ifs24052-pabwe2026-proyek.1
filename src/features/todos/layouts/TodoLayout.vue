@@ -65,7 +65,7 @@ function handleToggleAmbient() {
     <!-- Cozy Wallpaper Desk Background -->
     <div
       class="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat transition-all duration-700"
-      :style="{ backgroundImage: `url('/assets/desk-bg.jpg')` }"
+      :style="{ backgroundImage: `url('/assets/desk-bg.webp')` }"
     >
       <!-- Warm Vignette and Blur Overlay -->
       <div class="absolute inset-0 bg-stone-950/50 backdrop-blur-[2px]"></div>
@@ -160,7 +160,7 @@ function handleToggleAmbient() {
         <template v-else>
           <RouterLink
             to="/auth/login"
-            class="px-4 py-1.5 rounded-full text-xs font-semibold bg-amber-600 hover:bg-amber-500 text-white shadow-lg shadow-amber-600/30 transition-all"
+            class="px-4 py-1.5 rounded-full text-xs font-bold bg-amber-800 hover:bg-amber-700 text-white shadow-lg shadow-amber-900/40 transition-all"
           >
             Masuk Akun
           </RouterLink>

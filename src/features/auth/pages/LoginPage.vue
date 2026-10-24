@@ -55,7 +55,7 @@
         name="btn-submit"
         data-testid="login-submit-button"
         :disabled="loading"
-        class="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-amber-600 hover:bg-amber-500 active:bg-amber-700 rounded-xl shadow-lg shadow-amber-600/30 transition-all disabled:opacity-60"
+        class="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-bold text-white bg-amber-800 hover:bg-amber-700 active:bg-amber-900 rounded-xl shadow-lg shadow-amber-900/40 transition-all disabled:opacity-60"
       >
         <template v-if="loading">
           <Loader2 :size="18" class="animate-spin" />

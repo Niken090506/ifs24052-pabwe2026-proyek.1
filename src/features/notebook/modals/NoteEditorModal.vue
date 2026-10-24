@@ -641,8 +641,8 @@ function getFolderIcon(icon) {
             class="px-3 py-1 rounded-lg transition-all"
             :class="
               activeTab === 'write'
-                ? 'bg-amber-600 text-white font-semibold shadow-sm'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-amber-800 text-white font-bold shadow-sm'
+                : 'text-slate-300 hover:text-white'
             "
           >
             Tulis
@@ -653,8 +653,8 @@ function getFolderIcon(icon) {
             class="px-3 py-1 rounded-lg transition-all"
             :class="
               activeTab === 'preview'
-                ? 'bg-amber-600 text-white font-semibold shadow-sm'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-amber-800 text-white font-bold shadow-sm'
+                : 'text-slate-300 hover:text-white'
             "
           >
             Preview
@@ -703,7 +703,7 @@ function getFolderIcon(icon) {
             type="button"
             @click="handleSave"
             :disabled="!title.trim()"
-            class="px-6 py-2.5 rounded-xl text-xs font-semibold bg-amber-600 hover:bg-amber-500 text-white disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-amber-600/30 transition-all"
+            class="px-6 py-2.5 rounded-xl text-xs font-bold bg-amber-800 hover:bg-amber-700 text-white disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-amber-900/40 transition-all"
           >
             Simpan Catatan
           </button>
@@ -778,7 +778,7 @@ function getFolderIcon(icon) {
             type="file"
             accept="image/*"
             @change="handleFileUpload"
-            class="block w-full text-xs text-slate-400 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-amber-600 file:text-white hover:file:bg-amber-500 file:cursor-pointer"
+            class="block w-full text-xs text-slate-400 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-amber-800 file:text-white hover:file:bg-amber-700 file:cursor-pointer"
           />
           <p v-if="uploadingImage" class="text-xs text-amber-300 mt-2 flex items-center gap-1.5">
             <span class="inline-block w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
@@ -799,7 +799,7 @@ function getFolderIcon(icon) {
             type="button"
             @click="insertImageUrl"
             :disabled="!imageUrlInput.trim()"
-            class="mt-3 w-full py-2.5 rounded-xl text-xs font-semibold bg-amber-600 hover:bg-amber-500 text-white disabled:opacity-50 transition-all shadow-md"
+            class="mt-3 w-full py-2.5 rounded-xl text-xs font-bold bg-amber-800 hover:bg-amber-700 text-white disabled:opacity-50 transition-all shadow-md"
           >
             Sisipkan Gambar
           </button>
