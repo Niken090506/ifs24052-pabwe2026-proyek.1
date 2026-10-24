@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import path from "path";
+import fs from "fs";
 
 import authRoutes from "./routes/auth.js";
 import todosRoutes from "./routes/todos.js";
@@ -15,9 +16,21 @@ dotenv.config();
 const app = express();
 const PORT = process.env.API_PORT || 8000;
 
+const uploadDir = process.env.VERCEL
+  ? path.join("/tmp", "uploads")
+  : path.join(process.cwd(), "public", "uploads");
+
+if (!fs.existsSync(uploadDir)) {
+  try {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  } catch (e) {
+    console.warn("Could not create upload directory:", e);
+  }
+}
+
 app.use(cors());
 app.use(express.json());
-app.use("/uploads", express.static(path.join(process.cwd(), "public/uploads")));
+app.use("/uploads", express.static(uploadDir));
 
 
 // Request logger
@@ -45,16 +58,18 @@ app.use((err, req, res, next) => {
   res.status(500).json({ success: false, message: "Terjadi kesalahan internal server" });
 });
 
-const server = app
-  .listen(PORT, () => {
-    console.log(`🚀 Nixbay Express Backend running at http://localhost:${PORT}`);
-  })
-  .on("error", (err) => {
-    if (err.code === "EADDRINUSE") {
-      console.log(`ℹ️ Express backend is already active on port ${PORT}`);
-    } else {
-      console.error("Express server error:", err);
-    }
-  });
+if (!process.env.VERCEL) {
+  app
+    .listen(PORT, () => {
+      console.log(`🚀 Nixbay Express Backend running at http://localhost:${PORT}`);
+    })
+    .on("error", (err) => {
+      if (err.code === "EADDRINUSE") {
+        console.log(`ℹ️ Express backend is already active on port ${PORT}`);
+      } else {
+        console.error("Express server error:", err);
+      }
+    });
+}
 
 export default app;

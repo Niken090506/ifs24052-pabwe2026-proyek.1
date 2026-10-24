@@ -2,6 +2,9 @@
   "name": "ifs24052-nixbay-vue",
   "type": "module",
   "private": true,
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "scripts": {
     "dev": "vite",
     "server": "node server/index.js",

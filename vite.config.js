@@ -34,6 +34,10 @@ export default defineConfig(({ mode }) => {
           target: "http://localhost:8000",
           changeOrigin: true,
         },
+        "/uploads": {
+          target: "http://localhost:8000",
+          changeOrigin: true,
+        },
       },
     },
     preview: {
@@ -41,7 +45,7 @@ export default defineConfig(({ mode }) => {
     },
     define: {
       DELCOM_BASEURL: JSON.stringify(
-        env.VITE_DELCOM_BASEURL || "http://localhost:8000/api/v1"
+        env.VITE_DELCOM_BASEURL || "/api/v1"
       ),
     },
     test: {

@@ -6,7 +6,21 @@ import fs from "node:fs";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const dbPath = path.join(__dirname, "nixbay.sqlite");
+let dbPath = path.join(__dirname, "nixbay.sqlite");
+
+// On Vercel / serverless runtime, filesystem is read-only except /tmp
+if (process.env.VERCEL) {
+  const tmpDbPath = path.join("/tmp", "nixbay.sqlite");
+  if (!fs.existsSync(tmpDbPath) && fs.existsSync(dbPath)) {
+    try {
+      fs.copyFileSync(dbPath, tmpDbPath);
+    } catch (e) {
+      console.warn("Could not copy sqlite DB to /tmp:", e);
+    }
+  }
+  dbPath = tmpDbPath;
+}
+
 const db = new DatabaseSync(dbPath);
 
 // Enable foreign keys

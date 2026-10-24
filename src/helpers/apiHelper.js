@@ -6,6 +6,19 @@ const apiHelper = (() => {
       ? urlWithoutQuery.slice(0, -1)
       : urlWithoutQuery;
     const fullUrl = fixUrl + (urlQuery ? `?${urlQuery}` : "");
+    let finalUrl = fullUrl;
+    if (finalUrl.startsWith("/")) {
+      if (
+        typeof window !== "undefined" &&
+        window.location &&
+        window.location.origin &&
+        window.location.origin !== "null"
+      ) {
+        finalUrl = `${window.location.origin}${finalUrl}`;
+      } else {
+        finalUrl = `http://localhost:8000${finalUrl}`;
+      }
+    }
 
     const token = getAccessToken();
     const headers = {
@@ -16,7 +29,7 @@ const apiHelper = (() => {
       headers.Authorization = `Bearer ${token}`;
     }
 
-    return fetch(fullUrl, {
+    return fetch(finalUrl, {
       ...options,
       mode: "cors",
       headers,
