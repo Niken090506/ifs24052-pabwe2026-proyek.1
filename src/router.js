@@ -41,16 +41,19 @@ export const routes = [
         path: "notebook",
         name: "notebook",
         component: NotebookPage,
+        meta: { requiresAuth: true },
       },
       {
         path: "progress",
         name: "progress",
         component: ProgressPage,
+        meta: { requiresAuth: true },
       },
       {
         path: "users",
         name: "users",
         component: UsersPage,
+        meta: { requiresAuth: true },
       },
       {
         path: "profile",

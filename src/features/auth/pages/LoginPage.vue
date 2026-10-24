@@ -10,12 +10,12 @@
           class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
         />
         <input
-          type="email"
+          type="text"
           id="login-email-input"
           data-testid="login-email-input"
           v-model="email"
-          placeholder="nama@email.com"
-          aria-label="Alamat Email"
+          placeholder="nama@email.com atau admin"
+          aria-label="Alamat Email atau Username"
           class="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-black/40 border border-white/10 text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:border-amber-400/50 transition-all"
           required
         />

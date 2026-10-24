@@ -83,6 +83,11 @@ if (userCount === 0) {
     VALUES (1, 'Niken Sitohang', 'niken@delcom.org', 'password123', '/assets/avatar.jpeg')
   `).run();
 
+  db.prepare(`
+    INSERT INTO users (id, name, email, password, avatar)
+    VALUES (2, 'admin', 'admin@delcom.org', 'password123', '/assets/avatar.jpeg')
+  `).run();
+
   // Folders
   const insertFolder = db.prepare(`
     INSERT INTO folders (id, user_id, name, icon, description)
@@ -134,6 +139,15 @@ if (userCount === 0) {
   `);
   insertSession.run(45);
   insertSession.run(25);
+}
+
+// Ensure admin test account always exists
+const adminUser = db.prepare("SELECT id FROM users WHERE email = 'admin@delcom.org' OR name = 'admin'").get();
+if (!adminUser) {
+  db.prepare(`
+    INSERT INTO users (name, email, password, avatar)
+    VALUES ('admin', 'admin@delcom.org', 'password123', '/assets/avatar.jpeg')
+  `).run();
 }
 
 export default db;

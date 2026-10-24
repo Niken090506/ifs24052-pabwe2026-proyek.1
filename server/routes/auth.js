@@ -13,7 +13,7 @@ router.post("/login", (req, res) => {
     return res.status(400).json({ success: false, message: "Email dan kata sandi wajib diisi" });
   }
 
-  const user = db.prepare("SELECT * FROM users WHERE email = ?").get(email);
+  const user = db.prepare("SELECT * FROM users WHERE email = ? OR name = ?").get(email, email);
   if (!user || user.password !== password) {
     return res.status(401).json({ success: false, message: "Email atau kata sandi salah" });
   }
